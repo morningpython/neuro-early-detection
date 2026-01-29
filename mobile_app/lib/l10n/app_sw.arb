@@ -1,0 +1,152 @@
+{
+  "@@locale": "sw",
+  "appTitle": "NeuroAccess",
+  
+  "welcomeGreeting": "Habari!",
+  
+  "communityHealthWorker": "Mfanyakazi wa Afya ya Jamii",
+  
+  "welcomeMessage": "Anza uchunguzi wa mapema wa ugonjwa wa Parkinson kupitia uchambuzi wa sauti.",
+  
+  "startScreening": "Anza Uchunguzi",
+  
+  "recentScreenings": "Uchunguzi wa Hivi Karibuni",
+  
+  "noScreeningsYet": "Hakuna uchunguzi bado.\nGusa kitufe hapo juu kuanza.",
+  
+  "statistics": "Takwimu",
+  
+  "totalScreenings": "Jumla ya Uchunguzi",
+  
+  "lowRisk": "Hatari ya Chini",
+  
+  "mediumRisk": "Hatari ya Wastani",
+  
+  "highRisk": "Hatari Kubwa",
+  
+  "yearsOld": "Miaka {age}",
+  "@yearsOld": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "male": "Kiume",
+  
+  "female": "Kike",
+  
+  "other": "Nyingine",
+  
+  "patientInformation": "Taarifa za Mgonjwa",
+  
+  "patientAge": "Umri wa Mgonjwa",
+  
+  "patientGender": "Jinsia ya Mgonjwa",
+  
+  "consent": "Ridhaa",
+  
+  "consentMessage": "Mgonjwa anakubali kurekodi sauti kwa madhumuni ya uchunguzi wa ugonjwa wa Parkinson.",
+  
+  "next": "Endelea",
+  
+  "back": "Rudi",
+  
+  "cancel": "Ghairi",
+  
+  "save": "Hifadhi",
+  
+  "delete": "Futa",
+  
+  "voiceRecording": "Kurekodi Sauti",
+  
+  "holdPhoneInstruction": "Shika simu inchi 6 kutoka kinywani",
+  
+  "sayAhInstruction": "Sema 'Ahhh' kwa uwazi kwa muda wote",
+  
+  "tapToStart": "Gusa Kuanza",
+  
+  "recording": "Inarekodi...",
+  
+  "processing": "Inachakata...",
+  
+  "secondsRemaining": "Sekunde {seconds}",
+  "@secondsRemaining": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "analyzing": "Inachambua sampuli ya sauti...",
+  
+  "results": "Matokeo",
+  
+  "riskAssessment": "Tathmini ya Hatari",
+  
+  "lowRiskMessage": "Hakuna wasiwasi wa haraka. Endelea na ufuatiliaji wa afya wa kawaida.",
+  
+  "mediumRiskMessage": "Huenda dalili za mapema zimegunduliwa. Tunapendekeza uchunguzi tena baada ya miezi 6.",
+  
+  "highRiskMessage": "Tunapendekeza mashauriano na daktari wa neva kwa tathmini zaidi.",
+  
+  "referToHospital": "Mpeleke Hospitali",
+  
+  "scheduleFollowUp": "Panga Ufuatiliaji",
+  
+  "saveAndFinish": "Hifadhi na Maliza",
+  
+  "recordAgain": "Rekodi Tena",
+  
+  "confidence": "Uhakika",
+  
+  "viewDetails": "Angalia Maelezo",
+  
+  "hideDetails": "Ficha Maelezo",
+  
+  "settings": "Mipangilio",
+  
+  "language": "Lugha",
+  
+  "selectLanguage": "Chagua Lugha",
+  
+  "english": "Kiingereza",
+  
+  "swahili": "Kiswahili",
+  
+  "about": "Kuhusu",
+  
+  "version": "Toleo",
+  
+  "privacyPolicy": "Sera ya Faragha",
+  
+  "termsOfService": "Masharti ya Huduma",
+  
+  "errorOccurred": "Kosa limetokea",
+  
+  "tryAgain": "Jaribu Tena",
+  
+  "screeningSaved": "Uchunguzi umehifadhiwa kwa mafanikio",
+  
+  "confirmDelete": "Thibitisha Kufuta",
+  
+  "deleteConfirmMessage": "Una uhakika unataka kufuta uchunguzi huu?",
+  
+  "pleaseEnterValidAge": "Tafadhali ingiza umri halali (18-120)",
+  
+  "pleaseSelectGender": "Tafadhali chagua jinsia",
+  
+  "pleaseProvideConsent": "Tafadhali toa ridhaa kuendelea",
+  
+  "screeningComplete": "Uchunguzi Umekamilika",
+  
+  "recommendedAction": "Hatua Inayopendekezwa",
+  
+  "noImmediateConcern": "Hakuna Wasiwasi wa Haraka",
+  
+  "monitorRecommended": "Ufuatiliaji Unapendekezwa",
+  
+  "consultationRecommended": "Mashauriano Yanapendekezwa"
+}
