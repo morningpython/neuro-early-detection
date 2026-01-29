@@ -14,8 +14,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-lib64/
 parts/
 sdist/
 var/
@@ -29,6 +27,10 @@ venv/
 ENV/
 env/
 .venv
+
+# Python lib directories (not mobile_app/lib)
+/lib/
+/lib64/
 
 # Jupyter Notebook
 .ipynb_checkpoints

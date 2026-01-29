@@ -1,0 +1,352 @@
+{
+  "@@locale": "en",
+  "appTitle": "NeuroAccess",
+  "@appTitle": {
+    "description": "The title of the application"
+  },
+  
+  "welcomeGreeting": "Hello!",
+  "@welcomeGreeting": {
+    "description": "Welcome greeting on home screen"
+  },
+  
+  "communityHealthWorker": "Community Health Worker",
+  "@communityHealthWorker": {
+    "description": "CHW title"
+  },
+  
+  "welcomeMessage": "Start early Parkinson's disease screening through voice analysis.",
+  "@welcomeMessage": {
+    "description": "Welcome message explaining the app purpose"
+  },
+  
+  "startScreening": "Start Screening",
+  "@startScreening": {
+    "description": "Button text to start a new screening"
+  },
+  
+  "recentScreenings": "Recent Screenings",
+  "@recentScreenings": {
+    "description": "Section title for recent screenings list"
+  },
+  
+  "noScreeningsYet": "No screenings yet.\nTap the button above to start.",
+  "@noScreeningsYet": {
+    "description": "Empty state message when no screenings exist"
+  },
+  
+  "statistics": "Statistics",
+  "@statistics": {
+    "description": "Section title for statistics"
+  },
+  
+  "totalScreenings": "Total Screenings",
+  "@totalScreenings": {
+    "description": "Label for total screenings count"
+  },
+  
+  "lowRisk": "Low Risk",
+  "@lowRisk": {
+    "description": "Low risk category label"
+  },
+  
+  "mediumRisk": "Medium Risk",
+  "@mediumRisk": {
+    "description": "Medium risk category label"
+  },
+  
+  "highRisk": "High Risk",
+  "@highRisk": {
+    "description": "High risk category label"
+  },
+  
+  "yearsOld": "{age} years old",
+  "@yearsOld": {
+    "description": "Age display format",
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "male": "Male",
+  "@male": {
+    "description": "Male gender option"
+  },
+  
+  "female": "Female",
+  "@female": {
+    "description": "Female gender option"
+  },
+  
+  "other": "Other",
+  "@other": {
+    "description": "Other gender option"
+  },
+  
+  "patientInformation": "Patient Information",
+  "@patientInformation": {
+    "description": "Title for patient info screen"
+  },
+  
+  "patientAge": "Patient Age",
+  "@patientAge": {
+    "description": "Label for age input"
+  },
+  
+  "patientGender": "Patient Gender",
+  "@patientGender": {
+    "description": "Label for gender selection"
+  },
+  
+  "consent": "Consent",
+  "@consent": {
+    "description": "Label for consent section"
+  },
+  
+  "consentMessage": "The patient consents to voice recording for Parkinson's disease screening purposes.",
+  "@consentMessage": {
+    "description": "Consent checkbox message"
+  },
+  
+  "next": "Next",
+  "@next": {
+    "description": "Next button text"
+  },
+  
+  "back": "Back",
+  "@back": {
+    "description": "Back button text"
+  },
+  
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button text"
+  },
+  
+  "save": "Save",
+  "@save": {
+    "description": "Save button text"
+  },
+  
+  "delete": "Delete",
+  "@delete": {
+    "description": "Delete button text"
+  },
+  
+  "voiceRecording": "Voice Recording",
+  "@voiceRecording": {
+    "description": "Title for voice recording screen"
+  },
+  
+  "holdPhoneInstruction": "Hold phone 6 inches from mouth",
+  "@holdPhoneInstruction": {
+    "description": "Instruction for phone positioning"
+  },
+  
+  "sayAhInstruction": "Say 'Ahhh' clearly for the duration",
+  "@sayAhInstruction": {
+    "description": "Instruction for voice task"
+  },
+  
+  "tapToStart": "Tap to Start",
+  "@tapToStart": {
+    "description": "Button text before recording starts"
+  },
+  
+  "recording": "Recording...",
+  "@recording": {
+    "description": "Text shown while recording"
+  },
+  
+  "processing": "Processing...",
+  "@processing": {
+    "description": "Text shown while processing"
+  },
+  
+  "secondsRemaining": "{seconds} seconds",
+  "@secondsRemaining": {
+    "description": "Countdown timer display",
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  
+  "analyzing": "Analyzing voice sample...",
+  "@analyzing": {
+    "description": "Message shown during AI analysis"
+  },
+  
+  "results": "Results",
+  "@results": {
+    "description": "Title for results screen"
+  },
+  
+  "riskAssessment": "Risk Assessment",
+  "@riskAssessment": {
+    "description": "Section title for risk assessment"
+  },
+  
+  "lowRiskMessage": "No immediate concern. Continue routine health monitoring.",
+  "@lowRiskMessage": {
+    "description": "Message for low risk result"
+  },
+  
+  "mediumRiskMessage": "Possible early signs detected. We recommend re-screening in 6 months.",
+  "@mediumRiskMessage": {
+    "description": "Message for medium risk result"
+  },
+  
+  "highRiskMessage": "We recommend consultation with a neurologist for further evaluation.",
+  "@highRiskMessage": {
+    "description": "Message for high risk result"
+  },
+  
+  "referToHospital": "Refer to Hospital",
+  "@referToHospital": {
+    "description": "Button text for hospital referral"
+  },
+  
+  "scheduleFollowUp": "Schedule Follow-up",
+  "@scheduleFollowUp": {
+    "description": "Button text for scheduling follow-up"
+  },
+  
+  "saveAndFinish": "Save & Finish",
+  "@saveAndFinish": {
+    "description": "Button text to save and return home"
+  },
+  
+  "recordAgain": "Record Again",
+  "@recordAgain": {
+    "description": "Button text to re-record"
+  },
+  
+  "confidence": "Confidence",
+  "@confidence": {
+    "description": "Label for confidence score"
+  },
+  
+  "viewDetails": "View Details",
+  "@viewDetails": {
+    "description": "Button text to expand details"
+  },
+  
+  "hideDetails": "Hide Details",
+  "@hideDetails": {
+    "description": "Button text to collapse details"
+  },
+  
+  "settings": "Settings",
+  "@settings": {
+    "description": "Title for settings screen"
+  },
+  
+  "language": "Language",
+  "@language": {
+    "description": "Label for language setting"
+  },
+  
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Title for language selection dialog"
+  },
+  
+  "english": "English",
+  "@english": {
+    "description": "English language name"
+  },
+  
+  "swahili": "Swahili",
+  "@swahili": {
+    "description": "Swahili language name"
+  },
+  
+  "about": "About",
+  "@about": {
+    "description": "Label for about section"
+  },
+  
+  "version": "Version",
+  "@version": {
+    "description": "Label for app version"
+  },
+  
+  "privacyPolicy": "Privacy Policy",
+  "@privacyPolicy": {
+    "description": "Label for privacy policy"
+  },
+  
+  "termsOfService": "Terms of Service",
+  "@termsOfService": {
+    "description": "Label for terms of service"
+  },
+  
+  "errorOccurred": "An error occurred",
+  "@errorOccurred": {
+    "description": "Generic error message"
+  },
+  
+  "tryAgain": "Try Again",
+  "@tryAgain": {
+    "description": "Button text to retry action"
+  },
+  
+  "screeningSaved": "Screening saved successfully",
+  "@screeningSaved": {
+    "description": "Success message after saving screening"
+  },
+  
+  "confirmDelete": "Confirm Delete",
+  "@confirmDelete": {
+    "description": "Title for delete confirmation dialog"
+  },
+  
+  "deleteConfirmMessage": "Are you sure you want to delete this screening?",
+  "@deleteConfirmMessage": {
+    "description": "Message for delete confirmation"
+  },
+  
+  "pleaseEnterValidAge": "Please enter a valid age (18-120)",
+  "@pleaseEnterValidAge": {
+    "description": "Age validation error message"
+  },
+  
+  "pleaseSelectGender": "Please select a gender",
+  "@pleaseSelectGender": {
+    "description": "Gender validation error message"
+  },
+  
+  "pleaseProvideConsent": "Please provide consent to continue",
+  "@pleaseProvideConsent": {
+    "description": "Consent validation error message"
+  },
+  
+  "screeningComplete": "Screening Complete",
+  "@screeningComplete": {
+    "description": "Title shown when screening is complete"
+  },
+  
+  "recommendedAction": "Recommended Action",
+  "@recommendedAction": {
+    "description": "Section title for recommended action"
+  },
+  
+  "noImmediateConcern": "No Immediate Concern",
+  "@noImmediateConcern": {
+    "description": "Low risk status title"
+  },
+  
+  "monitorRecommended": "Monitoring Recommended",
+  "@monitorRecommended": {
+    "description": "Medium risk status title"
+  },
+  
+  "consultationRecommended": "Consultation Recommended",
+  "@consultationRecommended": {
+    "description": "High risk status title"
+  }
+}
