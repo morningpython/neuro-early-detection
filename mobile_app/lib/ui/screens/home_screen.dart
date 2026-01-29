@@ -80,6 +80,10 @@ class _HomeScreenState extends State<HomeScreen> {
               
               // 빠른 시작 버튼
               _buildQuickStartButton(context),
+              const SizedBox(height: 16),
+              
+              // 빠른 액션 버튼들
+              _buildQuickActions(context),
               const SizedBox(height: 24),
               
               // 최근 스크리닝
@@ -195,6 +199,43 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickActionButton(
+            icon: Icons.school,
+            label: l10n.training,
+            color: Colors.orange,
+            onTap: () => context.push('/training'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickActionButton(
+            icon: Icons.history,
+            label: l10n.recentScreenings,
+            color: Colors.blue,
+            onTap: () {
+              // TODO: 기록 화면으로 이동
+            },
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickActionButton(
+            icon: Icons.settings,
+            label: l10n.settings,
+            color: Colors.grey,
+            onTap: () => context.push('/settings'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -524,5 +565,54 @@ class _ScreeningCard extends StatelessWidget {
     } else {
       return DateFormat('MM/dd HH:mm').format(date);
     }
+  }
+}
+
+/// 빠른 액션 버튼 위젯
+class _QuickActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+        decoration: BoxDecoration(
+          color: color.withAlpha(25),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withAlpha(50)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: color.withAlpha(200),
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

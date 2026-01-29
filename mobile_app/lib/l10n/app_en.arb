@@ -348,5 +348,10 @@
   "consultationRecommended": "Consultation Recommended",
   "@consultationRecommended": {
     "description": "High risk status title"
+  },
+  
+  "training": "Training",
+  "@training": {
+    "description": "Training module label"
   }
 }

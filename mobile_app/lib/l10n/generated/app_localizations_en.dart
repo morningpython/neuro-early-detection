@@ -222,4 +222,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get consultationRecommended => 'Consultation Recommended';
+
+  @override
+  String get training => 'Training';
 }
