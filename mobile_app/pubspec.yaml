@@ -66,6 +66,9 @@ dependencies:
   encrypt: ^5.0.3
   flutter_secure_storage: ^9.0.0
   crypto: ^3.0.3
+  
+  # SMS & URL Launcher
+  url_launcher: ^6.2.4
 
 dev_dependencies:
   flutter_test:

@@ -6,9 +6,11 @@ library;
 
 import 'package:flutter/material.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../models/referral.dart';
 import '../../models/screening.dart' hide RiskLevel;
 import '../../services/ml_inference_service.dart';
 import '../../services/screening_repository.dart';
+import '../../services/sms_service.dart';
 
 class ResultsScreen extends StatefulWidget {
   final InferenceResult result;
@@ -26,8 +28,11 @@ class ResultsScreen extends StatefulWidget {
 
 class _ResultsScreenState extends State<ResultsScreen> {
   final ScreeningRepository _repository = ScreeningRepository();
+  final SmsService _smsService = SmsService();
+  final ReferralRepository _referralRepository = ReferralRepository();
   bool _isSaving = false;
   bool _isSaved = false;
+  Screening? _savedScreening;
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +110,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
                 const SizedBox(height: 12),
                 FilledButton.icon(
                   onPressed: () {
-                    _showReferralInfo(context);
+                    _showReferralDialog(context);
                   },
                   icon: const Icon(Icons.local_hospital),
                   label: Text(l10n.referToHospital),
@@ -163,7 +168,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
       );
       
       // 데이터베이스에 저장
-      await _repository.createAndSaveScreening(
+      _savedScreening = await _repository.createAndSaveScreening(
         audioPath: widget.audioPath ?? '',
         result: screeningResult,
       );
@@ -196,70 +201,215 @@ class _ResultsScreenState extends State<ResultsScreen> {
     }
   }
   
-  void _showReferralInfo(BuildContext context) {
+  void _showReferralDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final facilities = HealthFacility.getDefaultFacilities();
+    final patientNameController = TextEditingController();
+    final patientPhoneController = TextEditingController();
+    final notesController = TextEditingController();
+    HealthFacility? selectedFacility;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        minChildSize: 0.4,
-        maxChildSize: 0.9,
-        expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setModalState) => Padding(
+          padding: EdgeInsets.only(
+            left: 24,
+            right: 24,
+            top: 24,
+            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                '전문의 연결 안내',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 24),
+                Text(
+                  l10n.referToHospital,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                '높은 위험 수준이 감지되었습니다. 정확한 진단을 위해 신경과 전문의 상담을 권장합니다.',
-              ),
-              const SizedBox(height: 24),
-              _ReferralOption(
-                icon: Icons.phone,
-                title: '상담 전화',
-                subtitle: '신경과 상담 핫라인',
-                onTap: () {},
-              ),
-              _ReferralOption(
-                icon: Icons.location_on,
-                title: '가까운 병원',
-                subtitle: '주변 신경과 검색',
-                onTap: () {},
-              ),
-              _ReferralOption(
-                icon: Icons.calendar_today,
-                title: '예약 안내',
-                subtitle: '온라인 예약 방법',
-                onTap: () {},
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'SMS를 통해 환자를 의료 시설에 의뢰합니다.',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+
+                // 환자 정보
+                TextField(
+                  controller: patientNameController,
+                  decoration: const InputDecoration(
+                    labelText: '환자 이름',
+                    prefixIcon: Icon(Icons.person),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: patientPhoneController,
+                  keyboardType: TextInputType.phone,
+                  decoration: const InputDecoration(
+                    labelText: '환자 연락처',
+                    prefixIcon: Icon(Icons.phone),
+                    border: OutlineInputBorder(),
+                    hintText: '+254...',
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 시설 선택
+                Text(
+                  '의료 시설 선택',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: facilities.map((facility) {
+                      return RadioListTile<HealthFacility>(
+                        title: Text(facility.name),
+                        subtitle: Text(facility.address),
+                        value: facility,
+                        groupValue: selectedFacility,
+                        onChanged: (value) {
+                          setModalState(() => selectedFacility = value);
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 메모
+                TextField(
+                  controller: notesController,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                    labelText: '추가 메모 (선택)',
+                    prefixIcon: Icon(Icons.note),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // 발송 버튼
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: selectedFacility == null
+                        ? null
+                        : () async {
+                            await _sendReferralSms(
+                              context,
+                              patientName: patientNameController.text.isNotEmpty
+                                  ? patientNameController.text
+                                  : '환자',
+                              patientPhone: patientPhoneController.text,
+                              facility: selectedFacility!,
+                              notes: notesController.text.isNotEmpty
+                                  ? notesController.text
+                                  : null,
+                            );
+                            if (context.mounted) Navigator.pop(context);
+                          },
+                    icon: const Icon(Icons.send),
+                    label: const Text('SMS 의뢰 발송'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.all(16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _sendReferralSms(
+    BuildContext context, {
+    required String patientName,
+    required String patientPhone,
+    required HealthFacility facility,
+    String? notes,
+  }) async {
+    final locale = Localizations.localeOf(context).languageCode;
+
+    // 스크리닝이 저장되지 않았으면 먼저 저장
+    if (_savedScreening == null && !_isSaved) {
+      await _saveResult(context);
+    }
+
+    // 의뢰 생성
+    final referral = Referral.create(
+      screeningId: _savedScreening?.id ?? 'unknown',
+      patientName: patientName,
+      patientPhone: patientPhone,
+      facilityName: facility.name,
+      facilityPhone: facility.phone,
+      priority: ReferralPriority.high,
+      reason:
+          'Parkinson\'s screening - Risk: ${widget.result.riskLevel.title}, Score: ${(widget.result.probability * 100).toStringAsFixed(1)}%',
+      notes: notes,
+    );
+
+    // 의뢰 저장
+    await _referralRepository.saveReferral(referral);
+
+    // SMS 발송
+    final result = await _smsService.sendReferralSms(
+      referral: referral,
+      locale: locale,
+    );
+
+    if (context.mounted) {
+      if (result.success) {
+        // 의뢰 상태 업데이트
+        await _referralRepository.updateReferral(referral.markAsSent());
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${facility.name}(으)로 의뢰 SMS가 준비되었습니다.'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('SMS 발송 실패: ${result.errorMessage}'),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 
@@ -540,33 +690,5 @@ class _RecommendationCard extends StatelessWidget {
       default:
         return '';
     }
-  }
-}
-
-class _ReferralOption extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-  
-  const _ReferralOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.blue.shade50,
-        child: Icon(icon, color: Colors.blue),
-      ),
-      title: Text(title),
-      subtitle: Text(subtitle),
-      trailing: const Icon(Icons.chevron_right),
-      onTap: onTap,
-    );
   }
 }
