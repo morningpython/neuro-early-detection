@@ -222,4 +222,7 @@ class AppLocalizationsSw extends AppLocalizations {
 
   @override
   String get consultationRecommended => 'Mashauriano Yanapendekezwa';
+
+  @override
+  String get training => 'Mafunzo';
 }

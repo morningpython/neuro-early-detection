@@ -505,6 +505,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Consultation Recommended'**
   String get consultationRecommended;
+
+  /// Training module label
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get training;
 }
 
 class _AppLocalizationsDelegate

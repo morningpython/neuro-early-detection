@@ -5,6 +5,7 @@ import 'package:neuro_access/ui/screens/screening_screen.dart';
 import 'package:neuro_access/ui/screens/settings_screen.dart';
 import 'package:neuro_access/ui/screens/splash_screen.dart';
 import 'package:neuro_access/ui/screens/results_screen.dart';
+import 'package:neuro_access/ui/screens/training_screen.dart';
 import 'package:neuro_access/ui/shell/app_shell.dart';
 import 'package:neuro_access/services/ml_inference_service.dart';
 
@@ -36,6 +37,10 @@ final GoRouter appRouter = GoRouter(
             final patientInfo = state.extra as PatientInfo?;
             return ScreeningScreen(patientInfo: patientInfo);
           },
+        ),
+        GoRoute(
+          path: '/training',
+          builder: (context, state) => const TrainingScreen(),
         ),
         GoRoute(
           path: '/settings',
