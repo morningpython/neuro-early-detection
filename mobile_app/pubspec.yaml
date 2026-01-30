@@ -69,6 +69,9 @@ dependencies:
   
   # SMS & URL Launcher
   url_launcher: ^6.2.4
+  
+  # Connectivity Monitoring
+  connectivity_plus: ^6.0.3
 
 dev_dependencies:
   flutter_test:
