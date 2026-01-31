@@ -200,43 +200,34 @@ class DataExportService {
       'id',
       'created_at',
       if (options.includePatientInfo) ...[
-        'patient_name',
         'patient_age',
         'patient_gender',
       ],
       'risk_score',
       'risk_level',
-      'tremor_detected',
-      'speech_abnormality',
-      'gait_issue',
+      'confidence',
       'notes',
       if (options.includeAudioPath) 'audio_path',
       'chw_id',
-      'status',
     ];
     buffer.writeln(headers.join(','));
 
     // 데이터
     for (final screening in screenings) {
+      final riskScore = screening.result?.riskScore ?? 0.0;
       final row = <String>[
         options.anonymize ? _anonymizeId(screening.id) : screening.id,
         _displayDateFormat.format(screening.createdAt),
         if (options.includePatientInfo) ...[
-          options.anonymize 
-              ? _anonymizeName(screening.patientName)
-              : _escapeCsv(screening.patientName),
-          screening.patientAge.toString(),
-          screening.patientGender,
+          screening.patientAge?.toString() ?? '',
+          screening.patientGender ?? '',
         ],
-        screening.riskScore.toStringAsFixed(3),
-        _getRiskLevel(screening.riskScore),
-        screening.tremorDetected.toString(),
-        screening.speechAbnormality.toString(),
-        screening.gaitIssue.toString(),
+        riskScore.toStringAsFixed(3),
+        _getRiskLevel(riskScore),
+        (screening.result?.confidence ?? 0.0).toStringAsFixed(3),
         _escapeCsv(screening.notes ?? ''),
-        if (options.includeAudioPath) _escapeCsv(screening.audioPath ?? ''),
-        screening.chwId,
-        screening.status,
+        if (options.includeAudioPath) _escapeCsv(screening.audioPath),
+        screening.chwId ?? '',
       ];
       buffer.writeln(row.join(','));
     }
@@ -247,30 +238,25 @@ class DataExportService {
   /// 스크리닝 JSON 변환
   String _screeningsToJson(List<Screening> screenings, ExportOptions options) {
     final data = screenings.map((s) {
+      final riskScore = s.result?.riskScore ?? 0.0;
       final map = <String, dynamic>{
         'id': options.anonymize ? _anonymizeId(s.id) : s.id,
         'created_at': s.createdAt.toIso8601String(),
-        'risk_score': s.riskScore,
-        'risk_level': _getRiskLevel(s.riskScore),
-        'tremor_detected': s.tremorDetected,
-        'speech_abnormality': s.speechAbnormality,
-        'gait_issue': s.gaitIssue,
+        'risk_score': riskScore,
+        'risk_level': _getRiskLevel(riskScore),
+        'confidence': s.result?.confidence,
         'notes': s.notes,
         'chw_id': s.chwId,
-        'status': s.status,
       };
 
       if (options.includePatientInfo) {
         map['patient'] = {
-          'name': options.anonymize 
-              ? _anonymizeName(s.patientName) 
-              : s.patientName,
           'age': s.patientAge,
           'gender': s.patientGender,
         };
       }
 
-      if (options.includeAudioPath && s.audioPath != null) {
+      if (options.includeAudioPath) {
         map['audio_path'] = s.audioPath;
       }
 
@@ -293,9 +279,9 @@ class DataExportService {
       'created_at',
       'screening_id',
       if (options.includePatientInfo) 'patient_name',
-      'facility_id',
       'facility_name',
-      'urgency',
+      'facility_phone',
+      'priority',
       'status',
       'notes',
     ];
@@ -312,9 +298,9 @@ class DataExportService {
           options.anonymize 
               ? _anonymizeName(referral.patientName)
               : _escapeCsv(referral.patientName),
-        referral.facilityId,
         _escapeCsv(referral.facilityName),
-        referral.urgency.name,
+        referral.facilityPhone,
+        referral.priority.name,
         referral.status.name,
         _escapeCsv(referral.notes ?? ''),
       ];
@@ -334,10 +320,10 @@ class DataExportService {
             ? _anonymizeId(r.screeningId) 
             : r.screeningId,
         'facility': {
-          'id': r.facilityId,
           'name': r.facilityName,
+          'phone': r.facilityPhone,
         },
-        'urgency': r.urgency.name,
+        'priority': r.priority.name,
         'status': r.status.name,
         'notes': r.notes,
       };
