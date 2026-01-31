@@ -278,4 +278,166 @@ void main() {
       expect(minSamples, greaterThan(100));
     });
   });
+
+  group('FeatureExtractionService - extractFeatures method', () {
+    test('extractFeatures returns 22-dimensional vector', () async {
+      // Create test samples with realistic audio-like data (simulated voice)
+      const sampleRate = 16000;
+      const duration = 0.5; // 500ms
+      final numSamples = (sampleRate * duration).toInt();
+      
+      final samples = Float32List(numSamples);
+      for (int i = 0; i < numSamples; i++) {
+        // Simulate a simple sine wave at ~150Hz with some harmonics
+        final t = i / sampleRate;
+        samples[i] = 0.5 * _sin(2 * 3.14159 * 150 * t) +
+                     0.2 * _sin(2 * 3.14159 * 300 * t) +
+                     0.1 * _sin(2 * 3.14159 * 450 * t);
+      }
+      
+      final features = await service.extractFeatures(samples, sampleRate: sampleRate);
+      
+      expect(features.length, equals(22));
+      expect(features.every((f) => f.isFinite), isTrue);
+    });
+
+    test('extractFeatures with silent audio', () async {
+      final silentSamples = Float32List.fromList(
+        List<double>.filled(8000, 0.0),
+      );
+      
+      final features = await service.extractFeatures(silentSamples);
+      
+      expect(features.length, equals(22));
+      expect(features.every((f) => f.isFinite), isTrue);
+    });
+
+    test('extractFeatures with very short audio', () async {
+      // Very short audio (100 samples at 16kHz = 6.25ms)
+      final shortSamples = Float32List.fromList(
+        List<double>.generate(100, (i) => _sin(i * 0.1)),
+      );
+      
+      final features = await service.extractFeatures(shortSamples);
+      
+      expect(features.length, equals(22));
+    });
+
+    test('extractFeatures with noisy audio', () async {
+      // Create noisy audio with random values
+      final noisySamples = Float32List.fromList(
+        List<double>.generate(8000, (i) => (i % 7 - 3) * 0.1),
+      );
+      
+      final features = await service.extractFeatures(noisySamples);
+      
+      expect(features.length, equals(22));
+      expect(features.every((f) => f.isFinite), isTrue);
+    });
+
+    test('extractFeatures with pure tone', () async {
+      // Create a pure 200Hz sine wave
+      const sampleRate = 16000;
+      final samples = Float32List.fromList(
+        List<double>.generate(
+          8000,
+          (i) => 0.8 * _sin(2 * 3.14159 * 200 * i / sampleRate),
+        ),
+      );
+      
+      final features = await service.extractFeatures(samples);
+      
+      expect(features.length, equals(22));
+    });
+  });
+
+  group('FeatureExtractionService - extractFeaturesFromFile', () {
+    test('extractFeaturesFromFile throws UnimplementedError', () async {
+      expect(
+        () => service.extractFeaturesFromFile('/path/to/file.wav'),
+        throwsA(isA<UnimplementedError>()),
+      );
+    });
+  });
+
+  group('FeatureExtractionService - Feature Value Ranges', () {
+    test('extracted features should be in valid ranges', () async {
+      // Create test samples
+      final samples = Float32List.fromList(
+        List<double>.generate(
+          16000,
+          (i) => 0.5 * _sin(2 * 3.14159 * 150 * i / 16000) +
+                 0.1 * _sin(2 * 3.14159 * 300 * i / 16000),
+        ),
+      );
+      
+      final features = await service.extractFeatures(samples);
+      
+      // Features are normalized, so check for finite values
+      for (var i = 0; i < features.length; i++) {
+        expect(features[i].isFinite, isTrue, reason: 'Feature $i should be finite');
+        // Normalized features should be in reasonable range
+        expect(features[i].abs(), lessThan(10), reason: 'Feature $i should be in normal range');
+      }
+    });
+  });
+
+  group('FeatureExtractionService - Different Sample Rates', () {
+    test('extractFeatures with 8kHz sample rate', () async {
+      const sampleRate = 8000;
+      final samples = Float32List.fromList(
+        List<double>.generate(
+          4000,
+          (i) => 0.5 * _sin(2 * 3.14159 * 150 * i / sampleRate),
+        ),
+      );
+      
+      final features = await service.extractFeatures(samples, sampleRate: sampleRate);
+      
+      expect(features.length, equals(22));
+    });
+
+    test('extractFeatures with 44.1kHz sample rate', () async {
+      const sampleRate = 44100;
+      final samples = Float32List.fromList(
+        List<double>.generate(
+          22050,
+          (i) => 0.5 * _sin(2 * 3.14159 * 150 * i / sampleRate),
+        ),
+      );
+      
+      final features = await service.extractFeatures(samples, sampleRate: sampleRate);
+      
+      expect(features.length, equals(22));
+    });
+  });
+
+  group('FeatureExtractionService - Consistency', () {
+    test('same input should produce same output', () async {
+      final samples = Float32List.fromList(
+        List<double>.generate(8000, (i) => 0.5 * _sin(2 * 3.14159 * 150 * i / 16000)),
+      );
+      
+      final features1 = await service.extractFeatures(samples);
+      final features2 = await service.extractFeatures(samples);
+      
+      for (var i = 0; i < features1.length; i++) {
+        expect(features1[i], closeTo(features2[i], 0.0001));
+      }
+    });
+  });
+}
+
+// Helper function for tests
+double _sin(double x) {
+  // Taylor series approximation for sin
+  x = x % (2 * 3.14159265359);
+  if (x > 3.14159265359) x -= 2 * 3.14159265359;
+  double result = x;
+  double term = x;
+  for (int i = 1; i <= 10; i++) {
+    term *= -x * x / ((2 * i) * (2 * i + 1));
+    result += term;
+  }
+  return result;
 }
