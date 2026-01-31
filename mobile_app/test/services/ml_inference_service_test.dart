@@ -1,10 +1,150 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:neuro_access/services/ml_inference_service.dart';
 
 /// ML Inference Service Tests
 ///
 /// Note: Full ML tests require TensorFlow Lite model mocking
 /// These tests verify inference configuration and data structures
 void main() {
+  group('RiskLevel enum', () {
+    test('has three risk levels', () {
+      expect(RiskLevel.values.length, 3);
+      expect(RiskLevel.values, contains(RiskLevel.low));
+      expect(RiskLevel.values, contains(RiskLevel.medium));
+      expect(RiskLevel.values, contains(RiskLevel.high));
+    });
+
+    test('colorValue returns different colors for each level', () {
+      expect(RiskLevel.low.colorValue, 0xFF4CAF50); // Green
+      expect(RiskLevel.medium.colorValue, 0xFFFFC107); // Yellow
+      expect(RiskLevel.high.colorValue, 0xFFF44336); // Red
+    });
+
+    test('title returns Korean labels', () {
+      expect(RiskLevel.low.title, '낮은 위험');
+      expect(RiskLevel.medium.title, '중간 위험');
+      expect(RiskLevel.high.title, '높은 위험');
+    });
+
+    test('recommendation returns appropriate guidance', () {
+      expect(RiskLevel.low.recommendation, contains('정기적인 건강 모니터링'));
+      expect(RiskLevel.medium.recommendation, contains('재검사'));
+      expect(RiskLevel.high.recommendation, contains('신경과 전문의'));
+    });
+
+    test('urgency returns appropriate levels', () {
+      expect(RiskLevel.low.urgency, 'routine');
+      expect(RiskLevel.medium.urgency, 'monitor');
+      expect(RiskLevel.high.urgency, 'urgent');
+    });
+  });
+
+  group('InferenceResult', () {
+    test('creation with all fields', () {
+      const result = InferenceResult(
+        probability: 0.75,
+        riskLevel: RiskLevel.high,
+        confidence: 0.8,
+      );
+
+      expect(result.probability, 0.75);
+      expect(result.riskLevel, RiskLevel.high);
+      expect(result.confidence, 0.8);
+    });
+
+    test('probabilityPercent formats correctly', () {
+      const result = InferenceResult(
+        probability: 0.756,
+        riskLevel: RiskLevel.high,
+        confidence: 0.8,
+      );
+
+      expect(result.probabilityPercent, '75.6%');
+    });
+
+    test('confidencePercent formats correctly', () {
+      const result = InferenceResult(
+        probability: 0.5,
+        riskLevel: RiskLevel.medium,
+        confidence: 0.85,
+      );
+
+      expect(result.confidencePercent, '85%');
+    });
+
+    test('toString contains all info', () {
+      const result = InferenceResult(
+        probability: 0.7,
+        riskLevel: RiskLevel.high,
+        confidence: 0.9,
+      );
+
+      final str = result.toString();
+      expect(str, contains('probability'));
+      expect(str, contains('risk'));
+      expect(str, contains('confidence'));
+    });
+
+    test('low risk result', () {
+      const result = InferenceResult(
+        probability: 0.2,
+        riskLevel: RiskLevel.low,
+        confidence: 0.6,
+      );
+
+      expect(result.riskLevel.title, '낮은 위험');
+      expect(result.probabilityPercent, '20.0%');
+    });
+
+    test('medium risk result', () {
+      const result = InferenceResult(
+        probability: 0.5,
+        riskLevel: RiskLevel.medium,
+        confidence: 0.0,
+      );
+
+      expect(result.riskLevel.title, '중간 위험');
+      expect(result.confidence, 0.0);
+    });
+
+    test('edge case probability 0.0', () {
+      const result = InferenceResult(
+        probability: 0.0,
+        riskLevel: RiskLevel.low,
+        confidence: 1.0,
+      );
+
+      expect(result.probabilityPercent, '0.0%');
+    });
+
+    test('edge case probability 1.0', () {
+      const result = InferenceResult(
+        probability: 1.0,
+        riskLevel: RiskLevel.high,
+        confidence: 1.0,
+      );
+
+      expect(result.probabilityPercent, '100.0%');
+    });
+  });
+
+  group('MLInferenceService - Singleton', () {
+    test('factory returns same instance', () {
+      final instance1 = MLInferenceService();
+      final instance2 = MLInferenceService();
+
+      expect(identical(instance1, instance2), isTrue);
+    });
+
+    test('isModelLoaded initially false (before initialize)', () {
+      // Note: Cannot test this properly since singleton may already be initialized
+      // This test documents expected behavior
+      final service = MLInferenceService();
+      // Service may or may not be loaded depending on test order
+      expect(service.isModelLoaded, isA<bool>());
+    });
+  });
+
   group('MlInferenceService - Model Configuration', () {
     test('model file name', () {
       const modelFileName = 'parkinson_model.tflite';

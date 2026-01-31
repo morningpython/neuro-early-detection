@@ -382,4 +382,109 @@ void main() {
       expect(duration.inHours, 720);
     });
   });
+
+  group('SyncProvider - statusSummary', () {
+    late SyncProvider provider;
+
+    setUp(() {
+      provider = SyncProvider();
+    });
+
+    test('statusSummary shows initializing when not initialized', () {
+      expect(provider.isInitialized, false);
+      expect(provider.statusSummary, '초기화 중...');
+    });
+  });
+
+  group('SyncProvider - dispose', () {
+    test('dispose should not throw', () {
+      final provider = SyncProvider();
+      expect(() => provider.dispose(), returnsNormally);
+    });
+  });
+
+  group('SyncProgress', () {
+    test('should create with all fields', () {
+      final item = SyncQueueItem(
+        id: 'test-1',
+        entityType: SyncEntityType.screening,
+        entityId: 'entity-1',
+        operationType: SyncOperationType.create,
+        payload: '{}',
+        status: SyncStatus.pending,
+        createdAt: DateTime.now(),
+      );
+
+      final progress = SyncProgress(
+        current: 5,
+        total: 10,
+        currentItem: item,
+      );
+
+      expect(progress.current, 5);
+      expect(progress.total, 10);
+      expect(progress.currentItem, item);
+    });
+
+    test('progress should calculate correctly', () {
+      final item = SyncQueueItem(
+        id: 'test-2',
+        entityType: SyncEntityType.screening,
+        entityId: 'entity-2',
+        operationType: SyncOperationType.create,
+        payload: '{}',
+        status: SyncStatus.pending,
+        createdAt: DateTime.now(),
+      );
+
+      final progress = SyncProgress(
+        current: 3,
+        total: 10,
+        currentItem: item,
+      );
+
+      expect(progress.progress, 0.3);
+    });
+
+    test('progress should handle zero total', () {
+      final item = SyncQueueItem(
+        id: 'test-3',
+        entityType: SyncEntityType.referral,
+        entityId: 'entity-3',
+        operationType: SyncOperationType.create,
+        payload: '{}',
+        status: SyncStatus.pending,
+        createdAt: DateTime.now(),
+      );
+
+      final progress = SyncProgress(
+        current: 0,
+        total: 0,
+        currentItem: item,
+      );
+
+      expect(progress.progress, 0.0);
+    });
+
+    test('description should contain entity type label', () {
+      final item = SyncQueueItem(
+        id: 'test-4',
+        entityType: SyncEntityType.screening,
+        entityId: 'entity-4',
+        operationType: SyncOperationType.create,
+        payload: '{}',
+        status: SyncStatus.pending,
+        createdAt: DateTime.now(),
+      );
+
+      final progress = SyncProgress(
+        current: 5,
+        total: 10,
+        currentItem: item,
+      );
+
+      expect(progress.description, contains('동기화 중'));
+      expect(progress.description, contains('5/10'));
+    });
+  });
 }

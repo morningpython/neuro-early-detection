@@ -483,4 +483,43 @@ void main() {
       expect(isValidPassword('password123'), isTrue);
     });
   });
+
+  group('ChwAuthProvider - clearError', () {
+    late ChwAuthProvider provider;
+
+    setUp(() {
+      provider = ChwAuthProvider();
+    });
+
+    test('clearError should clear error message', () {
+      // Error message should be null initially
+      expect(provider.errorMessage, isNull);
+      
+      // Clear error should work even when no error exists
+      provider.clearError();
+      expect(provider.errorMessage, isNull);
+    });
+
+    test('clearError should notify listeners', () {
+      var notified = false;
+      provider.addListener(() {
+        notified = true;
+      });
+
+      provider.clearError();
+      expect(notified, isTrue);
+    });
+  });
+
+  group('ChwAuthProvider - dispose', () {
+    test('provider should dispose without error', () {
+      final provider = ChwAuthProvider();
+      
+      // Add listener to ensure it's removed on dispose
+      provider.addListener(() {});
+      
+      // Dispose should not throw
+      expect(() => provider.dispose(), returnsNormally);
+    });
+  });
 }
