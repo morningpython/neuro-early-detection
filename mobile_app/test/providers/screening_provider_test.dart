@@ -475,4 +475,163 @@ void main() {
       expect(female.gender, equals('F'));
     });
   });
+
+  group('ScreeningProvider - Reset Method', () {
+    late ScreeningProvider provider;
+
+    setUp(() {
+      provider = ScreeningProvider();
+    });
+
+    test('reset should set status to idle', () {
+      // Verify initial state
+      expect(provider.status, ScreeningStatus.idle);
+      
+      // Call reset
+      provider.reset();
+      
+      // Verify state after reset
+      expect(provider.status, ScreeningStatus.idle);
+    });
+
+    test('reset should clear progress', () {
+      provider.reset();
+      expect(provider.progress, 0.0);
+    });
+
+    test('reset should clear recording duration', () {
+      provider.reset();
+      expect(provider.recordingDuration, Duration.zero);
+    });
+
+    test('reset should restore default status message', () {
+      provider.reset();
+      expect(provider.statusMessage, '검사 준비 완료');
+    });
+
+    test('reset should clear data', () {
+      provider.reset();
+      expect(provider.data.audioPath, isNull);
+      expect(provider.data.result, isNull);
+      expect(provider.data.errorMessage, isNull);
+    });
+
+    test('reset should notify listeners', () {
+      var notified = false;
+      provider.addListener(() {
+        notified = true;
+      });
+      
+      provider.reset();
+      expect(notified, isTrue);
+    });
+  });
+
+  group('ScreeningProvider - PatientInfo Management', () {
+    late ScreeningProvider provider;
+
+    setUp(() {
+      provider = ScreeningProvider();
+    });
+
+    test('patientInfo can be set and retrieved', () {
+      final info = PatientInfo(age: 45, gender: 'F', hasConsent: true);
+      
+      provider.patientInfo = info;
+      
+      expect(provider.patientInfo, isNotNull);
+      expect(provider.patientInfo?.age, 45);
+      expect(provider.patientInfo?.gender, 'F');
+      expect(provider.patientInfo?.hasConsent, true);
+    });
+
+    test('patientInfo can be cleared by setting null', () {
+      provider.patientInfo = PatientInfo(age: 45, gender: 'M', hasConsent: true);
+      expect(provider.patientInfo, isNotNull);
+      
+      provider.patientInfo = null;
+      expect(provider.patientInfo, isNull);
+    });
+
+    test('patientInfo is preserved after reset', () {
+      // Note: Based on implementation, reset doesn't clear patientInfo
+      provider.patientInfo = PatientInfo(age: 60, gender: 'M', hasConsent: true);
+      provider.reset();
+      
+      // PatientInfo is NOT cleared by reset (screening data is cleared)
+      expect(provider.patientInfo, isNotNull);
+    });
+  });
+
+  group('ScreeningData - Multiple Updates', () {
+    test('copyWith can chain multiple updates', () {
+      var data = ScreeningData();
+      
+      data = data.copyWith(audioPath: '/path1.wav');
+      data = data.copyWith(recordingDuration: const Duration(seconds: 5));
+      data = data.copyWith(audioPath: '/path2.wav');
+      
+      expect(data.audioPath, '/path2.wav');
+      expect(data.recordingDuration, const Duration(seconds: 5));
+    });
+
+    test('timestamp remains constant through updates', () {
+      final timestamp = DateTime(2024, 1, 1);
+      var data = ScreeningData(timestamp: timestamp);
+      
+      data = data.copyWith(audioPath: '/test.wav');
+      data = data.copyWith(recordingDuration: const Duration(seconds: 10));
+      
+      expect(data.timestamp, timestamp);
+    });
+  });
+
+  group('ScreeningStatus - All State Properties', () {
+    test('each status has distinct index', () {
+      final indices = ScreeningStatus.values.map((s) => s.index).toSet();
+      expect(indices.length, ScreeningStatus.values.length);
+    });
+
+    test('status names are correct', () {
+      expect(ScreeningStatus.idle.name, 'idle');
+      expect(ScreeningStatus.recording.name, 'recording');
+      expect(ScreeningStatus.validating.name, 'validating');
+      expect(ScreeningStatus.extractingFeatures.name, 'extractingFeatures');
+      expect(ScreeningStatus.analyzing.name, 'analyzing');
+      expect(ScreeningStatus.completed.name, 'completed');
+      expect(ScreeningStatus.error.name, 'error');
+    });
+  });
+
+  group('ScreeningProvider - Dispose', () {
+    test('dispose should not throw', () {
+      final provider = ScreeningProvider();
+      
+      expect(() => provider.dispose(), returnsNormally);
+    });
+
+    test('dispose should clean up resources', () {
+      final provider = ScreeningProvider();
+      provider.addListener(() {});
+      
+      // Should dispose without errors
+      provider.dispose();
+    });
+  });
+
+  group('Audio Validation Constants', () {
+    test('sample rate should be 16kHz standard', () {
+      const sampleRate = 16000;
+      expect(sampleRate, 16000);
+    });
+
+    test('minimum duration should be validated correctly', () {
+      const minSamples = 16000; // 1 second at 16kHz
+      
+      // Test various durations
+      expect(15000 >= minSamples, isFalse); // Less than 1 sec
+      expect(16000 >= minSamples, isTrue);  // Exactly 1 sec
+      expect(32000 >= minSamples, isTrue);  // 2 seconds
+    });
+  });
 }

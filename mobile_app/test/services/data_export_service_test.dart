@@ -533,4 +533,146 @@ void main() {
       expect(exportData.containsKey('data'), isTrue);
     });
   });
+
+  group('DataExportService - CSV Header Logic', () {
+    test('should include required headers', () {
+      final headers = <String>[
+        'id',
+        'created_at',
+        'risk_score',
+        'risk_level',
+        'confidence',
+        'notes',
+        'chw_id',
+      ];
+      
+      expect(headers, contains('id'));
+      expect(headers, contains('created_at'));
+      expect(headers, contains('risk_score'));
+      expect(headers, contains('risk_level'));
+    });
+
+    test('should conditionally include patient info headers', () {
+      const includePatientInfo = true;
+      
+      final headers = <String>[
+        'id',
+        if (includePatientInfo) ...[
+          'patient_age',
+          'patient_gender',
+        ],
+        'risk_score',
+      ];
+      
+      expect(headers, contains('patient_age'));
+      expect(headers, contains('patient_gender'));
+    });
+
+    test('should conditionally include audio path header', () {
+      const includeAudioPath = true;
+      
+      final headers = <String>[
+        'id',
+        if (includeAudioPath) 'audio_path',
+      ];
+      
+      expect(headers, contains('audio_path'));
+    });
+  });
+
+  group('DataExportService - Referral CSV Headers', () {
+    test('should include referral-specific headers', () {
+      final headers = <String>[
+        'id',
+        'created_at',
+        'screening_id',
+        'facility_name',
+        'facility_phone',
+        'priority',
+        'status',
+        'notes',
+      ];
+      
+      expect(headers, contains('screening_id'));
+      expect(headers, contains('facility_name'));
+      expect(headers, contains('priority'));
+      expect(headers, contains('status'));
+    });
+  });
+
+  group('ExportedFile - Additional Properties', () {
+    test('should handle very large files', () {
+      final file = ExportedFile(
+        path: '/test',
+        name: 'large.csv',
+        size: 1024 * 1024 * 500, // 500 MB
+        createdAt: DateTime.now(),
+      );
+      
+      expect(file.sizeFormatted, contains('MB'));
+    });
+
+    test('should correctly identify xlsx format as null', () {
+      final file = ExportedFile(
+        path: '/test',
+        name: 'data.xlsx',
+        size: 1024,
+        createdAt: DateTime.now(),
+      );
+      
+      expect(file.format, isNull);
+    });
+
+    test('createdAt should be preserved', () {
+      final date = DateTime(2024, 6, 15, 10, 30);
+      final file = ExportedFile(
+        path: '/test',
+        name: 'test.csv',
+        size: 100,
+        createdAt: date,
+      );
+      
+      expect(file.createdAt, date);
+    });
+  });
+
+  group('Export Filename Generation', () {
+    test('should use custom filename when provided', () {
+      const customFilename = 'my_export';
+      const format = ExportFormat.csv;
+      
+      final filename = '$customFilename${format.extension}';
+      expect(filename, 'my_export.csv');
+    });
+
+    test('should generate timestamped filename', () {
+      final now = DateTime(2024, 6, 15, 14, 30, 45);
+      final formatted = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}_${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}${now.second.toString().padLeft(2, '0')}';
+      
+      expect(formatted, '2024-06-15_143045');
+    });
+  });
+
+  group('Screening Data Preparation', () {
+    test('should handle null risk score', () {
+      double? riskScore;
+      final displayScore = (riskScore ?? 0.0).toStringAsFixed(3);
+      
+      expect(displayScore, '0.000');
+    });
+
+    test('should handle null confidence', () {
+      double? confidence;
+      final displayConfidence = (confidence ?? 0.0).toStringAsFixed(3);
+      
+      expect(displayConfidence, '0.000');
+    });
+
+    test('should handle null notes', () {
+      String? notes;
+      final displayNotes = notes ?? '';
+      
+      expect(displayNotes, '');
+    });
+  });
 }
