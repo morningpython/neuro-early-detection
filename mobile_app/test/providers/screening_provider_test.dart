@@ -634,4 +634,169 @@ void main() {
       expect(32000 >= minSamples, isTrue);  // 2 seconds
     });
   });
+
+  group('ScreeningData - Additional Tests', () {
+    test('copyWith should preserve timestamp', () {
+      final timestamp = DateTime(2024, 3, 1, 12, 0);
+      final original = ScreeningData(
+        audioPath: '/test.wav',
+        timestamp: timestamp,
+      );
+      
+      final updated = original.copyWith(audioPath: '/new.wav');
+      
+      expect(updated.timestamp, timestamp);
+      expect(updated.audioPath, '/new.wav');
+    });
+
+    test('copyWith should preserve all fields when none specified', () {
+      final data = ScreeningData(
+        audioPath: '/audio.wav',
+        recordingDuration: const Duration(seconds: 30),
+        errorMessage: 'Test error',
+      );
+      
+      final copy = data.copyWith();
+      
+      expect(copy.audioPath, data.audioPath);
+      expect(copy.recordingDuration, data.recordingDuration);
+      expect(copy.errorMessage, data.errorMessage);
+    });
+
+    test('should handle error message in copyWith', () {
+      final original = ScreeningData(audioPath: '/test.wav');
+      
+      final withError = original.copyWith(errorMessage: 'Something went wrong');
+      
+      expect(withError.errorMessage, 'Something went wrong');
+      expect(withError.audioPath, '/test.wav');
+    });
+
+    test('timestamp should be automatically set to current time', () {
+      final before = DateTime.now();
+      final data = ScreeningData();
+      final after = DateTime.now();
+      
+      expect(data.timestamp.isAfter(before.subtract(const Duration(seconds: 1))), isTrue);
+      expect(data.timestamp.isBefore(after.add(const Duration(seconds: 1))), isTrue);
+    });
+
+    test('should create with explicit null values', () {
+      final data = ScreeningData(
+        audioPath: null,
+        recordingDuration: null,
+        result: null,
+        errorMessage: null,
+      );
+      
+      expect(data.audioPath, isNull);
+      expect(data.recordingDuration, isNull);
+      expect(data.result, isNull);
+      expect(data.errorMessage, isNull);
+    });
+  });
+
+  group('PatientInfo - Additional Tests', () {
+    test('copyWith with all fields', () {
+      final original = PatientInfo(
+        age: 50,
+        gender: 'M',
+        hasConsent: false,
+      );
+      
+      final updated = original.copyWith(
+        age: 60,
+        gender: 'F',
+        hasConsent: true,
+      );
+      
+      expect(updated.age, 60);
+      expect(updated.gender, 'F');
+      expect(updated.hasConsent, true);
+    });
+
+    test('isValid edge cases', () {
+      // Age 0 is not valid (must be >= 18)
+      final zeroAge = PatientInfo(
+        age: 0,
+        gender: 'M',
+        hasConsent: true,
+      );
+      expect(zeroAge.isValid, false);
+      
+      // Age 17 is not valid (must be >= 18)
+      final underAge = PatientInfo(
+        age: 17,
+        gender: 'M',
+        hasConsent: true,
+      );
+      expect(underAge.isValid, false);
+      
+      // Age 18 is valid
+      final minAge = PatientInfo(
+        age: 18,
+        gender: 'M',
+        hasConsent: true,
+      );
+      expect(minAge.isValid, true);
+      
+      // Age 120 is valid (max)
+      final maxAge = PatientInfo(
+        age: 120,
+        gender: 'F',
+        hasConsent: true,
+      );
+      expect(maxAge.isValid, true);
+      
+      // Age 121 is invalid (over max)
+      final overMaxAge = PatientInfo(
+        age: 121,
+        gender: 'F',
+        hasConsent: true,
+      );
+      expect(overMaxAge.isValid, false);
+    });
+
+    test('gender values', () {
+      expect(PatientInfo(age: 30, gender: 'M', hasConsent: true).gender, 'M');
+      expect(PatientInfo(age: 30, gender: 'F', hasConsent: true).gender, 'F');
+      expect(PatientInfo(age: 30, gender: 'Other', hasConsent: true).gender, 'Other');
+    });
+  });
+
+  group('ScreeningStatus - Helper Properties', () {
+    test('isProcessingState helper', () {
+      // Processing states
+      final processingStates = [
+        ScreeningStatus.recording,
+        ScreeningStatus.validating,
+        ScreeningStatus.extractingFeatures,
+        ScreeningStatus.analyzing,
+      ];
+      
+      // Non-processing states
+      final nonProcessingStates = [
+        ScreeningStatus.idle,
+        ScreeningStatus.completed,
+        ScreeningStatus.error,
+      ];
+      
+      for (final state in processingStates) {
+        expect([
+          ScreeningStatus.recording,
+          ScreeningStatus.validating,
+          ScreeningStatus.extractingFeatures,
+          ScreeningStatus.analyzing,
+        ].contains(state), isTrue);
+      }
+      
+      for (final state in nonProcessingStates) {
+        expect([
+          ScreeningStatus.idle,
+          ScreeningStatus.completed,
+          ScreeningStatus.error,
+        ].contains(state), isTrue);
+      }
+    });
+  });
 }

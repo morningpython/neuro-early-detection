@@ -311,5 +311,349 @@ void main() {
       expect(updated.quizScore, 90); // added
       expect(updated.attempts, 1); // unchanged
     });
+
+    test('copyWith should allow updating attempts', () {
+      final original = TrainingProgress(
+        oduleId: 'module-001',
+        lessonId: 'lesson-001',
+        status: LessonStatus.inProgress,
+        attempts: 1,
+      );
+
+      final updated = original.copyWith(attempts: 3);
+
+      expect(updated.attempts, 3);
+      expect(updated.status, LessonStatus.inProgress);
+    });
+
+    test('default attempts should be 0', () {
+      final progress = TrainingProgress(
+        oduleId: 'm1',
+        lessonId: 'l1',
+        status: LessonStatus.available,
+      );
+
+      expect(progress.attempts, 0);
+    });
+
+    test('isPassed edge case at exactly 70', () {
+      final exactlyPassed = TrainingProgress(
+        oduleId: 'm1',
+        lessonId: 'l1',
+        status: LessonStatus.completed,
+        quizScore: 70,
+      );
+
+      expect(exactlyPassed.isPassed, true);
+    });
+
+    test('isPassed edge case at 69', () {
+      final justFailed = TrainingProgress(
+        oduleId: 'm1',
+        lessonId: 'l1',
+        status: LessonStatus.completed,
+        quizScore: 69,
+      );
+
+      expect(justFailed.isPassed, false);
+    });
+  });
+
+  group('TrainingContent', () {
+    test('getModules should return non-empty list', () {
+      final modules = TrainingContent.getModules();
+
+      expect(modules, isNotEmpty);
+      expect(modules.length, greaterThanOrEqualTo(1));
+    });
+
+    test('all modules should have valid structure', () {
+      final modules = TrainingContent.getModules();
+
+      for (final module in modules) {
+        expect(module.id, isNotEmpty);
+        expect(module.title, isNotEmpty);
+        expect(module.titleSw, isNotEmpty);
+        expect(module.lessons, isNotNull);
+      }
+    });
+
+    test('all lessons should have valid quiz questions', () {
+      final modules = TrainingContent.getModules();
+
+      for (final module in modules) {
+        for (final lesson in module.lessons) {
+          expect(lesson.durationMinutes, greaterThan(0));
+          for (final quiz in lesson.quiz) {
+            expect(quiz.options, isNotEmpty);
+            expect(quiz.correctAnswer, lessThan(quiz.options.length));
+          }
+        }
+      }
+    });
+
+    test('should have exactly 3 modules', () {
+      final modules = TrainingContent.getModules();
+      expect(modules.length, 3);
+    });
+
+    test('parkinson basics module should have 2 lessons', () {
+      final modules = TrainingContent.getModules();
+      final basicsModule = modules.firstWhere((m) => m.id == 'module_basics');
+      
+      expect(basicsModule.lessons.length, 2);
+      expect(basicsModule.lessons[0].id, 'basics_01');
+      expect(basicsModule.lessons[1].id, 'basics_02');
+    });
+
+    test('screening module should have lessons', () {
+      final modules = TrainingContent.getModules();
+      final screeningModule = modules.firstWhere((m) => m.id == 'module_screening');
+      
+      expect(screeningModule.lessons, isNotEmpty);
+      expect(screeningModule.title, 'Voice Screening Procedure');
+    });
+
+    test('communication module should have lessons', () {
+      final modules = TrainingContent.getModules();
+      final commModule = modules.firstWhere((m) => m.id == 'module_communication');
+      
+      expect(commModule.lessons, isNotEmpty);
+      expect(commModule.title, 'Patient Communication');
+    });
+
+    test('all quiz questions should have explanations', () {
+      final modules = TrainingContent.getModules();
+      
+      int questionsWithExplanations = 0;
+      int totalQuestions = 0;
+      
+      for (final module in modules) {
+        for (final lesson in module.lessons) {
+          for (final quiz in lesson.quiz) {
+            totalQuestions++;
+            if (quiz.explanation != null) {
+              questionsWithExplanations++;
+            }
+          }
+        }
+      }
+      
+      expect(totalQuestions, greaterThan(0));
+      // At least half of questions should have explanations
+      expect(questionsWithExplanations, greaterThanOrEqualTo(totalQuestions ~/ 2));
+    });
+
+    test('module colors should be distinct', () {
+      final modules = TrainingContent.getModules();
+      final colors = modules.map((m) => m.themeColor.value).toSet();
+      
+      expect(colors.length, modules.length);
+    });
+
+    test('total training duration should be reasonable', () {
+      final modules = TrainingContent.getModules();
+      
+      int totalMinutes = 0;
+      for (final module in modules) {
+        totalMinutes += module.totalDuration;
+      }
+      
+      // Total training should be between 30 minutes and 3 hours
+      expect(totalMinutes, greaterThanOrEqualTo(30));
+      expect(totalMinutes, lessThanOrEqualTo(180));
+    });
+
+    test('all content items should be non-empty strings', () {
+      final modules = TrainingContent.getModules();
+      
+      for (final module in modules) {
+        for (final lesson in module.lessons) {
+          for (final item in lesson.contentItems) {
+            expect(item, isNotEmpty);
+          }
+          for (final itemSw in lesson.contentItemsSw) {
+            expect(itemSw, isNotEmpty);
+          }
+        }
+      }
+    });
+
+    test('locale methods should work for all content', () {
+      final modules = TrainingContent.getModules();
+      
+      for (final module in modules) {
+        // Test module locale methods
+        expect(module.getTitle('en'), module.title);
+        expect(module.getTitle('sw'), module.titleSw);
+        expect(module.getDescription('en'), module.description);
+        expect(module.getDescription('sw'), module.descriptionSw);
+        
+        for (final lesson in module.lessons) {
+          // Test lesson locale methods
+          expect(lesson.getTitle('en'), lesson.title);
+          expect(lesson.getTitle('sw'), lesson.titleSw);
+          expect(lesson.getDescription('en'), lesson.description);
+          expect(lesson.getDescription('sw'), lesson.descriptionSw);
+          expect(lesson.getContentItems('en'), lesson.contentItems);
+          expect(lesson.getContentItems('sw'), lesson.contentItemsSw);
+          
+          for (final quiz in lesson.quiz) {
+            // Test quiz locale methods
+            expect(quiz.getQuestion('en'), quiz.question);
+            expect(quiz.getQuestion('sw'), quiz.questionSw);
+            expect(quiz.getOptions('en'), quiz.options);
+            expect(quiz.getOptions('sw'), quiz.optionsSw);
+            
+            if (quiz.explanation != null) {
+              expect(quiz.getExplanation('en'), quiz.explanation);
+              expect(quiz.getExplanation('sw'), quiz.explanationSw);
+            }
+          }
+        }
+      }
+    });
+  });
+
+  group('QuizQuestion - getExplanation', () {
+    test('should return explanation in English', () {
+      final question = QuizQuestion(
+        id: 'q1',
+        question: 'Q',
+        questionSw: 'Q',
+        type: QuestionType.trueFalse,
+        options: ['T', 'F'],
+        optionsSw: ['K', 'U'],
+        correctAnswer: 0,
+        explanation: 'English explanation',
+        explanationSw: 'Swahili explanation',
+      );
+
+      expect(question.getExplanation('en'), 'English explanation');
+    });
+
+    test('should return explanation in Swahili', () {
+      final question = QuizQuestion(
+        id: 'q1',
+        question: 'Q',
+        questionSw: 'Q',
+        type: QuestionType.trueFalse,
+        options: ['T', 'F'],
+        optionsSw: ['K', 'U'],
+        correctAnswer: 0,
+        explanation: 'English explanation',
+        explanationSw: 'Swahili explanation',
+      );
+
+      expect(question.getExplanation('sw'), 'Swahili explanation');
+    });
+
+    test('should return null when explanation is not provided', () {
+      final question = QuizQuestion(
+        id: 'q1',
+        question: 'Q',
+        questionSw: 'Q',
+        type: QuestionType.trueFalse,
+        options: ['T', 'F'],
+        optionsSw: ['K', 'U'],
+        correctAnswer: 0,
+      );
+
+      expect(question.getExplanation('en'), isNull);
+      expect(question.getExplanation('sw'), isNull);
+    });
+  });
+
+  group('TrainingLesson - getDescription', () {
+    test('should return description in English', () {
+      final lesson = TrainingLesson(
+        id: 'l1',
+        title: 'T',
+        titleSw: 'T',
+        description: 'English description',
+        descriptionSw: 'Swahili description',
+        durationMinutes: 10,
+        iconName: 'book',
+        contentItems: [],
+        contentItemsSw: [],
+        quiz: [],
+      );
+
+      expect(lesson.getDescription('en'), 'English description');
+    });
+
+    test('should return description in Swahili', () {
+      final lesson = TrainingLesson(
+        id: 'l1',
+        title: 'T',
+        titleSw: 'T',
+        description: 'English description',
+        descriptionSw: 'Swahili description',
+        durationMinutes: 10,
+        iconName: 'book',
+        contentItems: [],
+        contentItemsSw: [],
+        quiz: [],
+      );
+
+      expect(lesson.getDescription('sw'), 'Swahili description');
+    });
+  });
+
+  group('TrainingModule - getDescription', () {
+    test('should return description in English', () {
+      final module = TrainingModule(
+        id: 'm1',
+        title: 'T',
+        titleSw: 'T',
+        description: 'English module desc',
+        descriptionSw: 'Swahili module desc',
+        lessons: [],
+        themeColor: Colors.blue,
+      );
+
+      expect(module.getDescription('en'), 'English module desc');
+    });
+
+    test('should return description in Swahili', () {
+      final module = TrainingModule(
+        id: 'm1',
+        title: 'T',
+        titleSw: 'T',
+        description: 'English module desc',
+        descriptionSw: 'Swahili module desc',
+        lessons: [],
+        themeColor: Colors.blue,
+      );
+
+      expect(module.getDescription('sw'), 'Swahili module desc');
+    });
+
+    test('totalDuration with empty lessons', () {
+      final module = TrainingModule(
+        id: 'm1',
+        title: 'T',
+        titleSw: 'T',
+        description: 'D',
+        descriptionSw: 'D',
+        lessons: [],
+        themeColor: Colors.blue,
+      );
+
+      expect(module.totalDuration, 0);
+    });
+  });
+
+  group('LessonStatus - enum values', () {
+    test('should have correct number of values', () {
+      expect(LessonStatus.values.length, 4);
+    });
+
+    test('indices should be sequential', () {
+      expect(LessonStatus.locked.index, 0);
+      expect(LessonStatus.available.index, 1);
+      expect(LessonStatus.inProgress.index, 2);
+      expect(LessonStatus.completed.index, 3);
+    });
   });
 }

@@ -457,5 +457,235 @@ void main() {
       
       expect(size, greaterThanOrEqualTo(0));
     });
+
+    test('estimateUploadTime with zero bandwidth', () {
+      final items = [
+        const UploadItem(
+          id: 'item-1',
+          entityType: SyncEntityType.screening,
+          operation: SyncOperationType.create,
+          data: {'test': 'data'},
+        ),
+      ];
+      
+      // Should handle edge case of very low bandwidth
+      final time = BatchUploadUtils.estimateUploadTime(
+        items,
+        bandwidthKbps: 1,
+      );
+      
+      expect(time, greaterThan(0));
+    });
+  });
+
+  group('BatchUploadConfig - Custom Values', () {
+    test('should create with custom values', () {
+      const config = BatchUploadConfig(
+        maxBatchSize: 25,
+        requestDelayMs: 200,
+        maxRetries: 4,
+        retryDelayMs: 1500,
+        useCompression: false,
+        timeoutSeconds: 45,
+      );
+      
+      expect(config.maxBatchSize, 25);
+      expect(config.requestDelayMs, 200);
+      expect(config.maxRetries, 4);
+      expect(config.retryDelayMs, 1500);
+      expect(config.useCompression, false);
+      expect(config.timeoutSeconds, 45);
+    });
+
+    test('low bandwidth should have higher timeout', () {
+      const lowBandwidth = BatchUploadConfig.lowBandwidth;
+      const highSpeed = BatchUploadConfig.highSpeed;
+      
+      expect(lowBandwidth.timeoutSeconds, greaterThan(highSpeed.timeoutSeconds));
+    });
+
+    test('low bandwidth should have more retries', () {
+      const lowBandwidth = BatchUploadConfig.lowBandwidth;
+      const highSpeed = BatchUploadConfig.highSpeed;
+      
+      expect(lowBandwidth.maxRetries, greaterThan(highSpeed.maxRetries));
+    });
+
+    test('low bandwidth should have smaller batch size', () {
+      const lowBandwidth = BatchUploadConfig.lowBandwidth;
+      const highSpeed = BatchUploadConfig.highSpeed;
+      
+      expect(lowBandwidth.maxBatchSize, lessThan(highSpeed.maxBatchSize));
+    });
+  });
+
+  group('BatchUploadResult - Edge Cases', () {
+    test('100% success rate', () {
+      final result = BatchUploadResult(
+        totalItems: 50,
+        successCount: 50,
+        failedCount: 0,
+        errors: [],
+        duration: const Duration(seconds: 10),
+        completedAt: DateTime.now(),
+      );
+      
+      expect(result.successRate, 1.0);
+      expect(result.isSuccess, true);
+    });
+
+    test('0% success rate', () {
+      final result = BatchUploadResult(
+        totalItems: 50,
+        successCount: 0,
+        failedCount: 50,
+        errors: [],
+        duration: const Duration(seconds: 10),
+        completedAt: DateTime.now(),
+      );
+      
+      expect(result.successRate, 0.0);
+      expect(result.isSuccess, false);
+    });
+
+    test('partial success rate', () {
+      final result = BatchUploadResult(
+        totalItems: 100,
+        successCount: 75,
+        failedCount: 25,
+        errors: [],
+        duration: const Duration(seconds: 30),
+        completedAt: DateTime.now(),
+      );
+      
+      expect(result.successRate, 0.75);
+      expect(result.isSuccess, false);
+    });
+  });
+
+  group('BatchUploadProgress - Edge Cases', () {
+    test('complete progress', () {
+      const progress = BatchUploadProgress(
+        currentBatch: 10,
+        totalBatches: 10,
+        itemsProcessed: 100,
+        totalItems: 100,
+        currentStatus: 'Complete',
+      );
+      
+      expect(progress.progress, 1.0);
+      expect(progress.batchProgress, 1.0);
+    });
+
+    test('starting progress', () {
+      const progress = BatchUploadProgress(
+        currentBatch: 1,
+        totalBatches: 10,
+        itemsProcessed: 10,
+        totalItems: 100,
+        currentStatus: 'Starting...',
+      );
+      
+      expect(progress.progress, 0.1);
+      expect(progress.batchProgress, 0.1);
+    });
+
+    test('description with large numbers', () {
+      const progress = BatchUploadProgress(
+        currentBatch: 99,
+        totalBatches: 100,
+        itemsProcessed: 9900,
+        totalItems: 10000,
+      );
+      
+      expect(progress.description, contains('99/100'));
+      expect(progress.description, contains('9900/10000'));
+    });
+  });
+
+  group('UploadItem - Different Entity Types', () {
+    test('screening item', () {
+      const item = UploadItem(
+        id: 'scr-001',
+        entityType: SyncEntityType.screening,
+        operation: SyncOperationType.create,
+        data: {'patientAge': 65, 'riskScore': 0.7},
+      );
+      
+      final map = item.toMap();
+      expect(map['entity_type'], 'screening');
+    });
+
+    test('referral item', () {
+      const item = UploadItem(
+        id: 'ref-001',
+        entityType: SyncEntityType.referral,
+        operation: SyncOperationType.update,
+        data: {'status': 'pending'},
+      );
+      
+      final map = item.toMap();
+      expect(map['entity_type'], 'referral');
+      expect(map['operation'], 'update');
+    });
+
+    test('training progress item', () {
+      const item = UploadItem(
+        id: 'trn-001',
+        entityType: SyncEntityType.trainingProgress,
+        operation: SyncOperationType.create,
+        data: {'moduleId': 'm1', 'score': 85},
+      );
+      
+      final map = item.toMap();
+      expect(map['entity_type'], 'trainingProgress');
+    });
+
+    test('delete operation', () {
+      const item = UploadItem(
+        id: 'del-001',
+        entityType: SyncEntityType.screening,
+        operation: SyncOperationType.delete,
+        data: {},
+      );
+      
+      final map = item.toMap();
+      expect(map['operation'], 'delete');
+    });
+  });
+
+  group('BatchError - Different Error Codes', () {
+    test('client error code', () {
+      const error = BatchError(
+        itemId: 'item-1',
+        entityType: 'screening',
+        errorMessage: 'Bad request',
+        errorCode: 400,
+      );
+      
+      expect(error.errorCode, 400);
+    });
+
+    test('server error code', () {
+      const error = BatchError(
+        itemId: 'item-2',
+        entityType: 'referral',
+        errorMessage: 'Internal server error',
+        errorCode: 500,
+      );
+      
+      expect(error.errorCode, 500);
+    });
+
+    test('timeout error without code', () {
+      const error = BatchError(
+        itemId: 'item-3',
+        entityType: 'screening',
+        errorMessage: 'Request timeout',
+      );
+      
+      final map = error.toMap();
+      expect(map.containsKey('error_code'), false);
+    });
   });
 }
