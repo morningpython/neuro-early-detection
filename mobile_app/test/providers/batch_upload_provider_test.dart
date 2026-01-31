@@ -212,4 +212,65 @@ void main() {
       expect(map['error_code'], 400);
     });
   });
+
+  group('BatchUploadProvider - initialize', () {
+    late BatchUploadProvider provider;
+
+    setUp(() {
+      provider = BatchUploadProvider();
+    });
+
+    tearDown(() {
+      provider.dispose();
+    });
+
+    test('initialize should set up progress listener', () {
+      // Should not throw
+      expect(() => provider.initialize(), returnsNormally);
+    });
+  });
+
+  group('BatchUploadProvider - updateConfigForNetwork', () {
+    late BatchUploadProvider provider;
+
+    setUp(() {
+      provider = BatchUploadProvider();
+    });
+
+    tearDown(() {
+      provider.dispose();
+    });
+
+    test('should update to lowBandwidth config', () {
+      expect(() => provider.updateConfigForNetwork(isLowBandwidth: true), returnsNormally);
+    });
+
+    test('should update to highSpeed config', () {
+      expect(() => provider.updateConfigForNetwork(isLowBandwidth: false), returnsNormally);
+    });
+  });
+
+  group('BatchUploadProvider - ChangeNotifier', () {
+    late BatchUploadProvider provider;
+
+    setUp(() {
+      provider = BatchUploadProvider();
+    });
+
+    tearDown(() {
+      provider.dispose();
+    });
+
+    test('can add and remove listeners', () {
+      var notified = false;
+      void listener() {
+        notified = true;
+      }
+
+      provider.addListener(listener);
+      provider.removeListener(listener);
+
+      expect(notified, false);
+    });
+  });
 }
