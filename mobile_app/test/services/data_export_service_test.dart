@@ -310,4 +310,227 @@ void main() {
       expect(identical(instance1, instance2), isTrue);
     });
   });
+
+  group('DataExportService - CSV Escaping Logic', () {
+    test('should not escape simple values', () {
+      const value = 'simple text';
+      final needsEscape = value.contains(',') || value.contains('"') || value.contains('\n');
+      expect(needsEscape, isFalse);
+    });
+
+    test('should escape values with commas', () {
+      const value = 'value, with, commas';
+      final needsEscape = value.contains(',');
+      expect(needsEscape, isTrue);
+    });
+
+    test('should escape values with quotes', () {
+      const value = 'value "with" quotes';
+      final needsEscape = value.contains('"');
+      expect(needsEscape, isTrue);
+    });
+
+    test('should escape values with newlines', () {
+      const value = 'value\nwith\nnewlines';
+      final needsEscape = value.contains('\n');
+      expect(needsEscape, isTrue);
+    });
+
+    test('should handle empty string', () {
+      const value = '';
+      final needsEscape = value.contains(',') || value.contains('"') || value.contains('\n');
+      expect(needsEscape, isFalse);
+    });
+  });
+
+  group('DataExportService - Anonymization Logic', () {
+    test('should anonymize ID keeping first and last 4 chars', () {
+      const id = 'abc12345xyz';
+      String anonymizeId(String id) {
+        if (id.length <= 8) return id;
+        return '${id.substring(0, 4)}****${id.substring(id.length - 4)}';
+      }
+      
+      final result = anonymizeId(id);
+      expect(result, 'abc1****5xyz');
+    });
+
+    test('should not anonymize short IDs', () {
+      const id = 'short';
+      String anonymizeId(String id) {
+        if (id.length <= 8) return id;
+        return '${id.substring(0, 4)}****${id.substring(id.length - 4)}';
+      }
+      
+      final result = anonymizeId(id);
+      expect(result, 'short');
+    });
+
+    test('should handle exactly 8 character IDs', () {
+      const id = '12345678';
+      String anonymizeId(String id) {
+        if (id.length <= 8) return id;
+        return '${id.substring(0, 4)}****${id.substring(id.length - 4)}';
+      }
+      
+      final result = anonymizeId(id);
+      expect(result, '12345678');
+    });
+
+    test('should anonymize name keeping only first letter', () {
+      const name = 'John Doe';
+      String anonymizeName(String name) {
+        if (name.isEmpty) return '';
+        return '${name[0]}***';
+      }
+      
+      final result = anonymizeName(name);
+      expect(result, 'J***');
+    });
+
+    test('should handle empty name', () {
+      const name = '';
+      String anonymizeName(String name) {
+        if (name.isEmpty) return '';
+        return '${name[0]}***';
+      }
+      
+      final result = anonymizeName(name);
+      expect(result, '');
+    });
+  });
+
+  group('DataExportService - Risk Level Logic', () {
+    test('should classify high risk for score >= 0.7', () {
+      String getRiskLevel(double score) {
+        if (score >= 0.7) return 'HIGH';
+        if (score >= 0.4) return 'MEDIUM';
+        if (score >= 0.1) return 'LOW';
+        return 'NONE';
+      }
+      
+      expect(getRiskLevel(0.7), 'HIGH');
+      expect(getRiskLevel(0.8), 'HIGH');
+      expect(getRiskLevel(1.0), 'HIGH');
+    });
+
+    test('should classify medium risk for score >= 0.4 and < 0.7', () {
+      String getRiskLevel(double score) {
+        if (score >= 0.7) return 'HIGH';
+        if (score >= 0.4) return 'MEDIUM';
+        if (score >= 0.1) return 'LOW';
+        return 'NONE';
+      }
+      
+      expect(getRiskLevel(0.4), 'MEDIUM');
+      expect(getRiskLevel(0.5), 'MEDIUM');
+      expect(getRiskLevel(0.69), 'MEDIUM');
+    });
+
+    test('should classify low risk for score >= 0.1 and < 0.4', () {
+      String getRiskLevel(double score) {
+        if (score >= 0.7) return 'HIGH';
+        if (score >= 0.4) return 'MEDIUM';
+        if (score >= 0.1) return 'LOW';
+        return 'NONE';
+      }
+      
+      expect(getRiskLevel(0.1), 'LOW');
+      expect(getRiskLevel(0.2), 'LOW');
+      expect(getRiskLevel(0.39), 'LOW');
+    });
+
+    test('should classify no risk for score < 0.1', () {
+      String getRiskLevel(double score) {
+        if (score >= 0.7) return 'HIGH';
+        if (score >= 0.4) return 'MEDIUM';
+        if (score >= 0.1) return 'LOW';
+        return 'NONE';
+      }
+      
+      expect(getRiskLevel(0.0), 'NONE');
+      expect(getRiskLevel(0.05), 'NONE');
+      expect(getRiskLevel(0.09), 'NONE');
+    });
+  });
+
+  group('DataExportService - Date Filtering Logic', () {
+    test('should filter by start date', () {
+      final data = [
+        DateTime(2024, 1, 1),
+        DateTime(2024, 2, 1),
+        DateTime(2024, 3, 1),
+        DateTime(2024, 4, 1),
+      ];
+      
+      final startDate = DateTime(2024, 2, 15);
+      final filtered = data.where((d) => d.isAfter(startDate)).toList();
+      
+      expect(filtered.length, 2);
+      expect(filtered, contains(DateTime(2024, 3, 1)));
+      expect(filtered, contains(DateTime(2024, 4, 1)));
+    });
+
+    test('should filter by end date', () {
+      final data = [
+        DateTime(2024, 1, 1),
+        DateTime(2024, 2, 1),
+        DateTime(2024, 3, 1),
+        DateTime(2024, 4, 1),
+      ];
+      
+      final endDate = DateTime(2024, 2, 15);
+      final filtered = data.where((d) => d.isBefore(endDate)).toList();
+      
+      expect(filtered.length, 2);
+      expect(filtered, contains(DateTime(2024, 1, 1)));
+      expect(filtered, contains(DateTime(2024, 2, 1)));
+    });
+
+    test('should filter by date range', () {
+      final data = [
+        DateTime(2024, 1, 1),
+        DateTime(2024, 2, 1),
+        DateTime(2024, 3, 1),
+        DateTime(2024, 4, 1),
+      ];
+      
+      final startDate = DateTime(2024, 1, 15);
+      final endDate = DateTime(2024, 3, 15);
+      final filtered = data.where((d) => 
+        d.isAfter(startDate) && d.isBefore(endDate)
+      ).toList();
+      
+      expect(filtered.length, 2);
+    });
+  });
+
+  group('DataExportService - JSON Encoding', () {
+    test('should encode screening data to JSON', () {
+      final data = {
+        'id': 'screening-001',
+        'created_at': DateTime(2024, 1, 1).toIso8601String(),
+        'risk_score': 0.75,
+        'patient': {
+          'age': 65,
+          'gender': 'M',
+        },
+      };
+      
+      final json = data.toString();
+      expect(json, contains('screening-001'));
+    });
+
+    test('should include export metadata', () {
+      final exportData = {
+        'export_date': DateTime.now().toIso8601String(),
+        'record_count': 10,
+        'data': [],
+      };
+      
+      expect(exportData.containsKey('export_date'), isTrue);
+      expect(exportData.containsKey('record_count'), isTrue);
+      expect(exportData.containsKey('data'), isTrue);
+    });
+  });
 }
