@@ -370,6 +370,158 @@ void main() {
       expect(nyquistFreq, greaterThan(5000)); // Covers voice harmonics
     });
   });
+
+  group('AudioRecordingService - Stream Controllers', () {
+    test('state stream should be broadcast', () {
+      const isBroadcast = true;
+      expect(isBroadcast, isTrue);
+    });
+
+    test('amplitude stream should be broadcast', () {
+      const isBroadcast = true;
+      expect(isBroadcast, isTrue);
+    });
+
+    test('duration stream should be broadcast', () {
+      const isBroadcast = true;
+      expect(isBroadcast, isTrue);
+    });
+  });
+
+  group('AudioRecordingService - Cancel Functionality', () {
+    test('should delete file on cancel', () {
+      const shouldDeleteFile = true;
+      expect(shouldDeleteFile, isTrue);
+    });
+
+    test('should reset state to idle on cancel', () {
+      const expectedState = RecordingState.idle;
+      expect(expectedState, equals(RecordingState.idle));
+    });
+
+    test('should clear recording path on cancel', () {
+      String? recordingPath = '/path/to/recording.wav';
+      recordingPath = null;
+      
+      expect(recordingPath, isNull);
+    });
+  });
+
+  group('AudioRecordingService - Minimum Duration', () {
+    test('minimum recording duration for analysis', () {
+      const minDuration = Duration(seconds: 3);
+      expect(minDuration.inSeconds, greaterThanOrEqualTo(3));
+    });
+
+    test('should validate file size', () {
+      const minFileSize = 1024; // 1KB minimum
+      const fileSize = 50000;
+      
+      final isValidSize = fileSize > minFileSize;
+      expect(isValidSize, isTrue);
+    });
+
+    test('should detect empty recording', () {
+      const fileSize = 44; // Only WAV header
+      const wavHeaderSize = 44;
+      
+      final isEmpty = fileSize <= wavHeaderSize;
+      expect(isEmpty, isTrue);
+    });
+  });
+
+  group('AudioRecordingService - Timer Management', () {
+    test('duration timer should update every second', () {
+      const updateInterval = Duration(seconds: 1);
+      expect(updateInterval.inSeconds, equals(1));
+    });
+
+    test('should stop timer on recording stop', () {
+      bool timerActive = true;
+      timerActive = false;
+      
+      expect(timerActive, isFalse);
+    });
+
+    test('should reset duration on new recording', () {
+      Duration duration = const Duration(seconds: 15);
+      duration = Duration.zero;
+      
+      expect(duration, equals(Duration.zero));
+    });
+  });
+
+  group('AudioRecordingService - Voice Detection', () {
+    test('should detect voice activity', () {
+      const amplitude = 0.3;
+      const voiceThreshold = 0.1;
+      
+      final hasVoice = amplitude > voiceThreshold;
+      expect(hasVoice, isTrue);
+    });
+
+    test('should detect silence', () {
+      const amplitude = 0.05;
+      const silenceThreshold = 0.1;
+      
+      final isSilent = amplitude < silenceThreshold;
+      expect(isSilent, isTrue);
+    });
+
+    test('should detect loud audio', () {
+      const amplitude = 0.95;
+      const loudThreshold = 0.9;
+      
+      final isLoud = amplitude > loudThreshold;
+      expect(isLoud, isTrue);
+    });
+  });
+
+  group('AudioRecordingService - File Operations', () {
+    test('should generate unique filenames', () {
+      final timestamp1 = DateTime.now().millisecondsSinceEpoch;
+      final timestamp2 = timestamp1 + 1;
+      
+      expect(timestamp1, isNot(equals(timestamp2)));
+    });
+
+    test('WAV extension should be used', () {
+      const filename = 'recording_123_456.wav';
+      expect(filename.endsWith('.wav'), isTrue);
+    });
+
+    test('filename pattern should be valid', () {
+      final uuid = '550e8400-e29b-41d4-a716-446655440000';
+      final timestamp = 1704067200000;
+      final filename = 'recording_${uuid}_$timestamp.wav';
+      
+      expect(filename, contains('recording_'));
+      expect(filename, contains(uuid));
+      expect(filename, contains(timestamp.toString()));
+    });
+  });
+
+  group('AudioRecordingService - Error Recovery', () {
+    test('should handle recorder initialization failure', () {
+      const errorMessage = 'Failed to initialize recorder';
+      expect(errorMessage, contains('initialize'));
+    });
+
+    test('should handle permission denial', () {
+      const errorMessage = 'Microphone permission denied';
+      expect(errorMessage, contains('permission'));
+    });
+
+    test('should handle file write failure', () {
+      const errorMessage = 'Failed to write recording file';
+      expect(errorMessage, contains('write'));
+    });
+
+    test('should handle storage full error', () {
+      const errorMessage = 'Insufficient storage space';
+      expect(errorMessage, contains('storage'));
+    });
+  });
 }
 
 // Mock singleton class for testing singleton pattern

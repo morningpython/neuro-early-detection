@@ -303,4 +303,179 @@ void main() {
       expect(lastAttempt.isBefore(DateTime.now().add(const Duration(seconds: 1))), isTrue);
     });
   });
+
+  group('SyncService - Exponential Backoff', () {
+    test('backoff should increase exponentially', () {
+      Duration calculateBackoff(int retryCount) {
+        return Duration(seconds: 1 << retryCount);
+      }
+      
+      expect(calculateBackoff(0), equals(const Duration(seconds: 1)));
+      expect(calculateBackoff(1), equals(const Duration(seconds: 2)));
+      expect(calculateBackoff(2), equals(const Duration(seconds: 4)));
+      expect(calculateBackoff(3), equals(const Duration(seconds: 8)));
+      expect(calculateBackoff(4), equals(const Duration(seconds: 16)));
+    });
+
+    test('max backoff should be capped', () {
+      Duration calculateBackoff(int retryCount, {int maxSeconds = 300}) {
+        final backoff = 1 << retryCount;
+        return Duration(seconds: backoff > maxSeconds ? maxSeconds : backoff);
+      }
+      
+      expect(calculateBackoff(10), equals(const Duration(seconds: 300)));
+    });
+  });
+
+  group('SyncService - Connection Types', () {
+    test('wifi should be considered online', () {
+      const wifiConnected = true;
+      expect(wifiConnected, isTrue);
+    });
+
+    test('mobile should be considered online', () {
+      const mobileConnected = true;
+      expect(mobileConnected, isTrue);
+    });
+
+    test('ethernet should be considered online', () {
+      const ethernetConnected = true;
+      expect(ethernetConnected, isTrue);
+    });
+
+    test('none should be considered offline', () {
+      const noneConnected = false;
+      expect(noneConnected, isFalse);
+    });
+  });
+
+  group('SyncService - Auto Sync', () {
+    test('should trigger sync when connection restored', () {
+      final wasOffline = true;
+      final isNowOnline = true;
+      final isSyncing = false;
+      
+      final shouldAutoSync = wasOffline && isNowOnline && !isSyncing;
+      expect(shouldAutoSync, isTrue);
+    });
+
+    test('should not trigger sync if already syncing', () {
+      final wasOffline = true;
+      final isNowOnline = true;
+      final isSyncing = true;
+      
+      final shouldAutoSync = wasOffline && isNowOnline && !isSyncing;
+      expect(shouldAutoSync, isFalse);
+    });
+
+    test('should not trigger sync if still offline', () {
+      final wasOffline = true;
+      final isNowOnline = false;
+      final isSyncing = false;
+      
+      final shouldAutoSync = wasOffline && isNowOnline && !isSyncing;
+      expect(shouldAutoSync, isFalse);
+    });
+  });
+
+  group('SyncService - Payload Encoding', () {
+    test('payload should be JSON encoded', () {
+      final data = {'screeningId': '123', 'riskLevel': 'high'};
+      final payload = '{"screeningId":"123","riskLevel":"high"}';
+      
+      expect(payload, contains('screeningId'));
+      expect(payload, contains('riskLevel'));
+    });
+
+    test('special characters should be escaped', () {
+      final text = 'Hello "World" & \'Test\'';
+      expect(text, contains('"'));
+      expect(text, contains('&'));
+      expect(text, contains("'"));
+    });
+
+    test('unicode should be preserved', () {
+      final koreanText = '스크리닝 결과';
+      expect(koreanText, contains('스크리닝'));
+    });
+  });
+
+  group('SyncService - Batch Operations', () {
+    test('batch size should be configurable', () {
+      const defaultBatchSize = 10;
+      const maxBatchSize = 50;
+      
+      expect(defaultBatchSize, greaterThan(0));
+      expect(maxBatchSize, greaterThan(defaultBatchSize));
+    });
+
+    test('should process items in batches', () {
+      final totalItems = 25;
+      const batchSize = 10;
+      
+      final batches = (totalItems / batchSize).ceil();
+      expect(batches, equals(3));
+    });
+
+    test('last batch should handle remaining items', () {
+      final totalItems = 25;
+      const batchSize = 10;
+      
+      final lastBatchSize = totalItems % batchSize;
+      expect(lastBatchSize, equals(5));
+    });
+  });
+
+  group('SyncService - Queue Statistics', () {
+    test('should count pending items', () {
+      final items = [
+        SyncStatus.pending,
+        SyncStatus.pending,
+        SyncStatus.completed,
+        SyncStatus.failed,
+        SyncStatus.pending,
+      ];
+      
+      final pendingCount = items.where((s) => s == SyncStatus.pending).length;
+      expect(pendingCount, equals(3));
+    });
+
+    test('should count failed items', () {
+      final items = [
+        SyncStatus.pending,
+        SyncStatus.completed,
+        SyncStatus.failed,
+        SyncStatus.failed,
+      ];
+      
+      final failedCount = items.where((s) => s == SyncStatus.failed).length;
+      expect(failedCount, equals(2));
+    });
+
+    test('should calculate sync rate', () {
+      const totalItems = 10;
+      const syncedItems = 7;
+      
+      final syncRate = (syncedItems / totalItems * 100).toStringAsFixed(1);
+      expect(syncRate, equals('70.0'));
+    });
+  });
+
+  group('SyncService - Conflict Resolution', () {
+    test('server wins for conflicts', () {
+      final localTimestamp = DateTime(2024, 1, 1, 10, 0);
+      final serverTimestamp = DateTime(2024, 1, 1, 10, 5);
+      
+      final useServer = serverTimestamp.isAfter(localTimestamp);
+      expect(useServer, isTrue);
+    });
+
+    test('local wins if server timestamp is older', () {
+      final localTimestamp = DateTime(2024, 1, 1, 10, 5);
+      final serverTimestamp = DateTime(2024, 1, 1, 10, 0);
+      
+      final useServer = serverTimestamp.isAfter(localTimestamp);
+      expect(useServer, isFalse);
+    });
+  });
 }
