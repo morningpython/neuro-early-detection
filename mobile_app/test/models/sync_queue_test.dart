@@ -290,12 +290,12 @@ void main() {
     });
 
     test('successRate should be computed correctly', () {
-      const result = SyncResult(
+      final result = SyncResult(
         totalItems: 10,
         successCount: 7,
         failedCount: 3,
-        errors: ['e1', 'e2', 'e3'],
-        completedAt: const DateTime(2024, 1, 1),
+        errors: const ['e1', 'e2', 'e3'],
+        completedAt: DateTime(2024, 1, 1),
       );
 
       expect(result.isSuccess, isFalse);
