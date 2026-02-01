@@ -163,8 +163,8 @@ class SyncProvider extends ChangeNotifier {
       return _currentProgress!.description;
     }
 
-    if (_stats.totalPending > 0) {
-      return '${_stats.totalPending}개 항목 대기 중';
+    if (_stats.pendingCount > 0) {
+      return '${_stats.pendingCount}개 항목 대기 중';
     }
 
     return '동기화 완료';

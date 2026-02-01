@@ -26,7 +26,6 @@ class SettingsScreen extends StatelessWidget {
           
           return ListView(
             children: [
-              // 일반 설정
               _buildSectionHeader(context, l10n.language),
               Consumer<LocaleProvider>(
                 builder: (context, localeProvider, child) {
@@ -40,7 +39,6 @@ class SettingsScreen extends StatelessWidget {
                 },
               ),
               
-              // 테마 설정
               ListTile(
                 leading: const Icon(Icons.palette),
                 title: const Text('Theme'),
@@ -49,17 +47,15 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () => _showThemeDialog(context, settingsProvider),
               ),
               
-              // 알림 설정
               SwitchListTile(
                 secondary: const Icon(Icons.notifications),
                 title: const Text('Notifications'),
                 subtitle: const Text('Enable push notifications'),
                 value: settings.enableNotifications,
-                onChanged: (value) => settingsProvider.setEnableNotifications(value),
+                onChanged: (value) => settingsProvider.setNotifications(value),
               ),
               const Divider(),
               
-              // 앱 정보 섹션
               _buildSectionHeader(context, l10n.about),
               ListTile(
                 leading: const Icon(Icons.info_outline),
@@ -68,16 +64,13 @@ class SettingsScreen extends StatelessWidget {
               ),
               const Divider(),
               
-              // CHW 설정
               _buildSectionHeader(context, l10n.communityHealthWorker),
               ListTile(
                 leading: const Icon(Icons.person_outline),
                 title: const Text('CHW Profile'),
                 subtitle: const Text('Configure profile information'),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: CHW 프로필 화면
-                },
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.school_outlined),
@@ -93,7 +86,6 @@ class SettingsScreen extends StatelessWidget {
               ),
               const Divider(),
               
-              // 고급 설정
               _buildSectionHeader(context, 'Advanced'),
               ListTile(
                 leading: const Icon(Icons.tune),
@@ -109,48 +101,31 @@ class SettingsScreen extends StatelessWidget {
               ),
               const Divider(),
               
-              // 데이터 관리
               _buildSectionHeader(context, 'Data'),
               _buildStorageInfo(context, settingsProvider),
               ListTile(
                 leading: const Icon(Icons.delete_outline),
                 title: Text(l10n.delete),
                 subtitle: const Text('Delete all screening records'),
-                onTap: () {
-                  _showDeleteConfirmation(context, settingsProvider);
-                },
+                onTap: () => _showDeleteConfirmation(context, settingsProvider),
               ),
               const Divider(),
               
-              // 정보
               _buildSectionHeader(context, 'Legal'),
               ListTile(
                 leading: const Icon(Icons.description_outlined),
                 title: Text(l10n.privacyPolicy),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: 개인정보 처리방침
-                },
+                onTap: () {},
               ),
               ListTile(
                 leading: const Icon(Icons.gavel_outlined),
                 title: Text(l10n.termsOfService),
                 trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: 이용약관
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.medical_information_outlined),
-                title: const Text('IRB Approval'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () {
-                  // TODO: IRB 정보
-                },
+                onTap: () {},
               ),
               const SizedBox(height: 24),
               
-              // 푸터
               Center(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -184,7 +159,6 @@ class SettingsScreen extends StatelessWidget {
 
   Widget _buildStorageInfo(BuildContext context, SettingsProvider provider) {
     final storageInfo = provider.storageInfo;
-    
     return ListTile(
       leading: const Icon(Icons.storage_outlined),
       title: const Text('Local Data'),
@@ -248,9 +222,7 @@ class SettingsScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: LocaleProvider.supportedLocales.map((locale) {
-            final isSelected = locale == localeProvider.locale;
             final name = LocaleProvider.localeNames[locale.languageCode] ?? locale.languageCode;
-            
             return ListTile(
               title: Text(name),
               leading: Radio<Locale>(
@@ -263,7 +235,6 @@ class SettingsScreen extends StatelessWidget {
                   }
                 },
               ),
-              selected: isSelected,
               onTap: () {
                 localeProvider.setLocale(locale);
                 Navigator.pop(context);
@@ -277,7 +248,6 @@ class SettingsScreen extends StatelessWidget {
 
   void _showDeleteConfirmation(BuildContext context, SettingsProvider provider) {
     final l10n = AppLocalizations.of(context)!;
-    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -304,57 +274,6 @@ class SettingsScreen extends StatelessWidget {
             child: Text(l10n.delete),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String title) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  void _showLanguageDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final localeProvider = context.read<LocaleProvider>();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.selectLanguage),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: LocaleProvider.supportedLocales.map((locale) {
-            final isSelected = locale == localeProvider.locale;
-            final name = LocaleProvider.localeNames[locale.languageCode] ?? locale.languageCode;
-            
-            return ListTile(
-              title: Text(name),
-              leading: Radio<Locale>(
-                value: locale,
-                groupValue: localeProvider.locale,
-                onChanged: (value) {
-                  if (value != null) {
-                    localeProvider.setLocale(value);
-                    Navigator.pop(context);
-                  }
-                },
-              ),
-              selected: isSelected,
-              onTap: () {
-                localeProvider.setLocale(locale);
-                Navigator.pop(context);
-              },
-            );
-          }).toList(),
-        ),
       ),
     );
   }

@@ -179,6 +179,7 @@ class SyncQueueItem {
     int? retryCount,
     DateTime? lastAttemptAt,
     String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return SyncQueueItem(
       id: id,
@@ -191,7 +192,7 @@ class SyncQueueItem {
       retryCount: retryCount ?? this.retryCount,
       maxRetries: maxRetries,
       lastAttemptAt: lastAttemptAt ?? this.lastAttemptAt,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
       priority: priority,
     );
   }
@@ -225,7 +226,7 @@ class SyncQueueItem {
   SyncQueueItem resetToPending() {
     return copyWith(
       status: SyncStatus.pending,
-      errorMessage: null,
+      clearErrorMessage: true,
     );
   }
 

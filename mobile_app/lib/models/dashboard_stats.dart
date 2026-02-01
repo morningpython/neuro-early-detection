@@ -182,10 +182,10 @@ class RiskDistribution {
 
   int get total => highRisk + mediumRisk + lowRisk + noRisk;
 
-  double highRiskPercent => total > 0 ? highRisk / total * 100 : 0;
-  double mediumRiskPercent => total > 0 ? mediumRisk / total * 100 : 0;
-  double lowRiskPercent => total > 0 ? lowRisk / total * 100 : 0;
-  double noRiskPercent => total > 0 ? noRisk / total * 100 : 0;
+  double get highRiskPercent => total > 0 ? highRisk / total * 100 : 0;
+  double get mediumRiskPercent => total > 0 ? mediumRisk / total * 100 : 0;
+  double get lowRiskPercent => total > 0 ? lowRisk / total * 100 : 0;
+  double get noRiskPercent => total > 0 ? noRisk / total * 100 : 0;
 
   factory RiskDistribution.empty() {
     return const RiskDistribution(
