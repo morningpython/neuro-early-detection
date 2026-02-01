@@ -237,5 +237,101 @@ void main() {
       expect(failed.retryCount, 1);
       expect(failed.errorMessage, 'Network error');
     });
+
+    test('resetToPending should clear error and set pending', () {
+      final failed = SyncQueueItem(
+        id: '1',
+        createdAt: DateTime.now(),
+        entityType: SyncEntityType.screening,
+        entityId: 'scr-001',
+        operationType: SyncOperationType.create,
+        status: SyncStatus.failed,
+        payload: '{}',
+        retryCount: 2,
+        errorMessage: 'Temporary error',
+      );
+
+      final reset = failed.resetToPending();
+
+      expect(reset.status, SyncStatus.pending);
+      expect(reset.errorMessage, isNull);
+      expect(reset.retryCount, 2);
+    });
+
+    test('toString should include type and status labels', () {
+      final item = SyncQueueItem(
+        id: 'sync-001',
+        createdAt: DateTime(2024, 1, 15),
+        entityType: SyncEntityType.referral,
+        entityId: 'ref-001',
+        operationType: SyncOperationType.update,
+        status: SyncStatus.inProgress,
+        payload: '{}',
+      );
+
+      final text = item.toString();
+
+      expect(text, contains('SyncQueueItem'));
+      expect(text, contains(SyncEntityType.referral.label));
+      expect(text, contains(SyncStatus.inProgress.label));
+    });
+  });
+
+  group('SyncResult', () {
+    test('empty should create zero counts', () {
+      final result = SyncResult.empty();
+
+      expect(result.totalItems, 0);
+      expect(result.successCount, 0);
+      expect(result.failedCount, 0);
+      expect(result.errors, isEmpty);
+      expect(result.isSuccess, isTrue);
+      expect(result.successRate, 0);
+    });
+
+    test('successRate should be computed correctly', () {
+      const result = SyncResult(
+        totalItems: 10,
+        successCount: 7,
+        failedCount: 3,
+        errors: ['e1', 'e2', 'e3'],
+        completedAt: const DateTime(2024, 1, 1),
+      );
+
+      expect(result.isSuccess, isFalse);
+      expect(result.successRate, 0.7);
+    });
+  });
+
+  group('SyncStats', () {
+    test('totalCount should sum all statuses', () {
+      const stats = SyncStats(
+        pendingCount: 2,
+        inProgressCount: 1,
+        completedCount: 5,
+        failedCount: 2,
+      );
+
+      expect(stats.totalCount, 10);
+    });
+
+    test('hasPending should reflect pending count', () {
+      const withPending = SyncStats(
+        pendingCount: 1,
+        inProgressCount: 0,
+        completedCount: 0,
+        failedCount: 0,
+      );
+
+      const withoutPending = SyncStats(
+        pendingCount: 0,
+        inProgressCount: 2,
+        completedCount: 1,
+        failedCount: 0,
+      );
+
+      expect(withPending.hasPending, isTrue);
+      expect(withoutPending.hasPending, isFalse);
+    });
   });
 }

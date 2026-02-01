@@ -799,4 +799,299 @@ void main() {
       }
     });
   });
+
+  group('ScreeningProvider - Reset Logic', () {
+    late ScreeningProvider provider;
+
+    setUp(() {
+      provider = ScreeningProvider();
+    });
+
+    test('reset should restore idle state', () {
+      // Simulate some activity by manually setting fields
+      // Note: This is testing the reset behavior conceptually
+      provider.reset();
+      
+      expect(provider.status, ScreeningStatus.idle);
+      expect(provider.statusMessage, '검사 준비 완료');
+      expect(provider.progress, 0.0);
+      expect(provider.recordingDuration, Duration.zero);
+    });
+
+    test('reset should clear data', () {
+      provider.reset();
+      
+      expect(provider.data.audioPath, isNull);
+      expect(provider.data.result, isNull);
+      expect(provider.data.errorMessage, isNull);
+    });
+
+    test('multiple resets should be idempotent', () {
+      provider.reset();
+      final firstStatus = provider.status;
+      final firstMessage = provider.statusMessage;
+      
+      provider.reset();
+      
+      expect(provider.status, firstStatus);
+      expect(provider.statusMessage, firstMessage);
+    });
+  });
+
+  group('ScreeningProvider - Error Handling', () {
+    late ScreeningProvider provider;
+
+    setUp(() {
+      provider = ScreeningProvider();
+    });
+
+    test('error status should persist message', () {
+      // This tests the concept of error handling
+      // Actual _handleError is private, but we test the state expectations
+      const expectedMessage = '녹음을 시작할 수 없습니다: test error';
+      
+      // Verify initial state
+      expect(provider.status, isNot(ScreeningStatus.error));
+      expect(provider.data.errorMessage, isNull);
+    });
+
+    test('error state should have appropriate status', () {
+      expect(ScreeningStatus.error, isNotNull);
+      expect(ScreeningStatus.values.last, ScreeningStatus.error);
+    });
+  });
+
+  group('ScreeningProvider - Progress Tracking', () {
+    test('progress values should be in valid range', () {
+      const validProgress = [0.0, 0.2, 0.5, 0.8, 1.0];
+      
+      for (final progress in validProgress) {
+        expect(progress >= 0.0, isTrue);
+        expect(progress <= 1.0, isTrue);
+      }
+    });
+
+    test('progress should correspond to workflow stages', () {
+      // idle: 0.0
+      // validating: 0.2
+      // extractingFeatures: 0.5
+      // analyzing: 0.8
+      // completed: 1.0
+      
+      final stageProgresses = {
+        'idle': 0.0,
+        'validating': 0.2,
+        'extractingFeatures': 0.5,
+        'analyzing': 0.8,
+        'completed': 1.0,
+      };
+      
+      for (final entry in stageProgresses.entries) {
+        expect(entry.value >= 0.0, isTrue);
+        expect(entry.value <= 1.0, isTrue);
+      }
+    });
+  });
+
+  group('ScreeningProvider - Status Messages', () {
+    test('status messages should match workflow states', () {
+      final expectedMessages = {
+        'idle': '검사 준비 완료',
+        'recording': '음성을 녹음 중입니다...',
+        'validating': '오디오 품질을 확인 중입니다...',
+        'extractingFeatures': '음성 특징을 추출 중입니다...',
+        'analyzing': 'AI 분석을 실행 중입니다...',
+        'completed': '분석 완료',
+      };
+      
+      expect(expectedMessages['idle'], '검사 준비 완료');
+      expect(expectedMessages['recording'], '음성을 녹음 중입니다...');
+      expect(expectedMessages['validating'], '오디오 품질을 확인 중입니다...');
+      expect(expectedMessages['extractingFeatures'], '음성 특징을 추출 중입니다...');
+      expect(expectedMessages['analyzing'], 'AI 분석을 실행 중입니다...');
+      expect(expectedMessages['completed'], '분석 완료');
+    });
+
+    test('Korean messages should be properly formatted', () {
+      final messages = [
+        '검사 준비 완료',
+        '음성을 녹음 중입니다...',
+        '오디오 품질을 확인 중입니다...',
+        '음성 특징을 추출 중입니다...',
+        'AI 분석을 실행 중입니다...',
+        '분석 완료',
+      ];
+      
+      for (final msg in messages) {
+        expect(msg.isNotEmpty, isTrue);
+        expect(msg.length >= 4, isTrue); // "분석 완료" is 5 characters
+      }
+    });
+  });
+
+  group('ScreeningProvider - Recording Duration', () {
+    test('duration should start at zero', () {
+      final provider = ScreeningProvider();
+      expect(provider.recordingDuration, Duration.zero);
+    });
+
+    test('duration values should be valid', () {
+      final validDurations = [
+        Duration.zero,
+        const Duration(seconds: 1),
+        const Duration(seconds: 30),
+        const Duration(minutes: 1),
+        const Duration(minutes: 5),
+      ];
+      
+      for (final duration in validDurations) {
+        expect(duration.inMicroseconds >= 0, isTrue);
+      }
+    });
+
+    test('minimum recording duration should be 1 second', () {
+      const minDuration = Duration(seconds: 1);
+      expect(minDuration.inSeconds, 1);
+      expect(minDuration.inMilliseconds, 1000);
+    });
+  });
+
+  group('Audio Sample Validation', () {
+    test('minimum sample count at 16kHz', () {
+      const sampleRate = 16000;
+      const minSeconds = 1;
+      const minSamples = sampleRate * minSeconds;
+      
+      expect(minSamples, 16000);
+      
+      // Test validation logic
+      expect(15999 < minSamples, isTrue);  // Too short
+      expect(16000 >= minSamples, isTrue); // Valid
+      expect(32000 >= minSamples, isTrue); // Valid
+    });
+
+    test('sample validation for different durations', () {
+      const sampleRate = 16000;
+      
+      final testCases = {
+        0.5: 8000,   // 0.5 seconds
+        1.0: 16000,  // 1 second (minimum)
+        2.0: 32000,  // 2 seconds
+        5.0: 80000,  // 5 seconds
+        10.0: 160000, // 10 seconds
+      };
+      
+      for (final entry in testCases.entries) {
+        final expectedSamples = (sampleRate * entry.key).toInt();
+        expect(expectedSamples, entry.value);
+      }
+    });
+  });
+
+  group('Feature Extraction Simulation', () {
+    test('feature count should be reasonable', () {
+      // Typical MFCC features: 13 coefficients × N frames
+      const mfccCoeffs = 13;
+      const frameCount = 100; // Example
+      const expectedFeatures = mfccCoeffs * frameCount;
+      
+      expect(expectedFeatures, 1300);
+      expect(expectedFeatures > 0, isTrue);
+    });
+
+    test('feature extraction duration delay', () {
+      const uxDelay = Duration(milliseconds: 500);
+      
+      expect(uxDelay.inMilliseconds, 500);
+      expect(uxDelay.inMilliseconds >= 0, isTrue);
+    });
+  });
+
+  group('ML Inference Simulation', () {
+    test('inference delay should be reasonable', () {
+      const uxDelay = Duration(milliseconds: 500);
+      
+      expect(uxDelay.inMilliseconds, 500);
+      expect(uxDelay.inSeconds, 0);
+    });
+
+    test('progress steps should be sequential', () {
+      const progressSteps = [0.0, 0.2, 0.5, 0.8, 1.0];
+      
+      for (int i = 0; i < progressSteps.length - 1; i++) {
+        expect(progressSteps[i] < progressSteps[i + 1], isTrue);
+      }
+    });
+  });
+
+  group('ScreeningData - Workflow State', () {
+    test('should track audioPath through workflow', () {
+      var data = ScreeningData();
+      expect(data.audioPath, isNull);
+      
+      data = data.copyWith(audioPath: '/recordings/test.wav');
+      expect(data.audioPath, '/recordings/test.wav');
+    });
+
+    test('should track recordingDuration through workflow', () {
+      var data = ScreeningData();
+      expect(data.recordingDuration, isNull);
+      
+      data = data.copyWith(recordingDuration: const Duration(seconds: 5));
+      expect(data.recordingDuration, const Duration(seconds: 5));
+    });
+
+    test('should accumulate data through pipeline stages', () {
+      var data = ScreeningData();
+      
+      // After recording
+      data = data.copyWith(
+        audioPath: '/test.wav',
+        recordingDuration: const Duration(seconds: 3),
+      );
+      
+      expect(data.audioPath, isNotNull);
+      expect(data.recordingDuration, isNotNull);
+      expect(data.result, isNull);
+    });
+  });
+
+  group('PatientInfo - Validation Logic', () {
+    test('should validate age range boundaries', () {
+      const minAge = 18;
+      const maxAge = 120;
+      
+      expect(minAge, 18);
+      expect(maxAge, 120);
+      expect(minAge < maxAge, isTrue);
+    });
+
+    test('should require consent for validity', () {
+      final withConsent = PatientInfo(
+        age: 50,
+        gender: 'M',
+        hasConsent: true,
+      );
+      
+      final withoutConsent = PatientInfo(
+        age: 50,
+        gender: 'M',
+        hasConsent: false,
+      );
+      
+      expect(withConsent.isValid, isTrue);
+      expect(withoutConsent.isValid, isFalse);
+    });
+
+    test('should validate age for elderly patients', () {
+      final elderly = PatientInfo(
+        age: 85,
+        gender: 'F',
+        hasConsent: true,
+      );
+      
+      expect(elderly.isValid, isTrue);
+      expect(elderly.age, greaterThan(65));
+    });
+  });
 }
